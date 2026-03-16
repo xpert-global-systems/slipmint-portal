@@ -1,18 +1,30 @@
-import { ethers } from "ethers";
+ import { ethers } from "ethers";
 
-// Cache the provider instance so we don't open too many connections
+// Cache provider so we reuse a single connection
 let provider = null;
 
 export function getProvider() {
-  if (!provider) {
-    const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
-    
-    if (!rpcUrl) {
-      console.warn("Warning: NEXT_PUBLIC_RPC_URL is missing. Using public fallback.");
+  try {
+    if (!provider) {
+      const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+
+      // If no RPC provided, fallback to public Ethereum node
+      const finalRpc = rpcUrl || "https://cloudflare-eth.com";
+
+      if (!rpcUrl) {
+        console.warn("⚠️ NEXT_PUBLIC_RPC_URL not found. Using fallback RPC.");
+      }
+
+      provider = new ethers.JsonRpcProvider(finalRpc, {
+        name: "ethereum",
+        chainId: 1
+      });
     }
-    
-    // Connect to the provided RPC or fallback to a public Ethereum node
-    provider = new ethers.JsonRpcProvider(rpcUrl || "https://cloudflare-eth.com"); 
+
+    return provider;
+
+  } catch (error) {
+    console.error("Blockchain provider initialization failed:", error);
+    throw new Error("Unable to initialize blockchain provider");
   }
-  return provider;
 }
