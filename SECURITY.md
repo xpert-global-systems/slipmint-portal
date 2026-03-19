@@ -28,10 +28,11 @@ We welcome responsible disclosure of security vulnerabilities.
 
 ## Encrypted Reporting (PGP)
 
-For sensitive reports, you may encrypt your message using our PGP key.
+For sensitive reports, we plan to support encryption using a project PGP key.
 
-- PGP Fingerprint: XXXX XXXX XXXX XXXX XXXX XXXX XXXX XXXX  
-- Public Key: (add your key here)
+At this time, no official PGP key is available. Please do not rely on any third-party or unofficial keys claiming to represent this project.
+
+Until a verified PGP key and fingerprint are published here, please use the primary contact email above and indicate if you require an encrypted channel so we can coordinate a suitable alternative.
 
 ---
 
