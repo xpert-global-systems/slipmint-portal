@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  # 🔹 Node.js / Frontend (Next.js, Vercel, etc.)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    versioning-strategy: "increase"
+    labels:
+      - "dependencies"
+      - "auto-update"
+
+  # 🔹 GitHub Actions (keeps workflows updated)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    labels:
+      - "github-actions"
+      - "ci/cd"
