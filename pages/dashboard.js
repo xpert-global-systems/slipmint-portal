@@ -4,9 +4,18 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return;
+    }
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/dashboard`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${token}`,
       },
     })
       .then(res => res.json())
