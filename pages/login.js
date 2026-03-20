@@ -29,12 +29,16 @@ export default function Login() {
     <div style={{ padding: "20px" }}>
       <h1>Login</h1>
 
+      <label htmlFor="email">Email</label>
       <input
+        id="email"
         placeholder="Email"
         onChange={(e) => setEmail(e.target.value)}
       />
 
+      <label htmlFor="password">Password</label>
       <input
+        id="password"
         type="password"
         placeholder="Password"
         onChange={(e) => setPassword(e.target.value)}
