@@ -19,7 +19,6 @@ export default function Signup() {
     const data = await res.json();
 
     if (data.token) {
-      localStorage.setItem("token", data.token);
       window.location.href = "/dashboard";
     } else {
       alert("Signup failed");
