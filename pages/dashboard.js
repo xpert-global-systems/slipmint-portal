@@ -23,7 +23,7 @@ export default function Dashboard() {
       <h3>Activity</h3>
       <ul>
         {data.activity.map((a, i) => (
-          <li key={i}>{a}</li>
+          <li key={a}>{a}</li>
         ))}
       </ul>
     </div>
