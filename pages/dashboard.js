@@ -18,7 +18,7 @@ export default function Dashboard() {
   return (
     <div>
       <h1>Dashboard</h1>
-      <p>Balance: {data.balance}</p>
+      <p>Balance: {data.balance ?? 0}</p>
 
       <h3>Activity</h3>
       <ul>
