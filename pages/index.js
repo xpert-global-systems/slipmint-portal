@@ -15,7 +15,7 @@ export default function Home() {
         </Link>
 
         <Link href="/signup">
-          <button>Create Account</button>
+          <a>Create Account</a>
         </Link>
       </div>
 
