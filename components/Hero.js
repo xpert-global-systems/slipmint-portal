@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { siteConfig } from '../lib/siteConfig'
 
 export default function Hero() {
   return (
@@ -7,14 +6,19 @@ export default function Hero() {
       <div style={styles.container}>
         <div style={styles.badge}>Crypto Infrastructure Platform</div>
 
-        <h1 style={styles.title}>{siteConfig.tagline}</h1>
+        <h1 style={styles.title}>
+          Crypto Infrastructure Built on <span style={styles.highlight}>Discipline</span>
+        </h1>
 
-        <p style={styles.subtitle}>{siteConfig.shortTagline}</p>
+        <p style={styles.subtitle}>
+          Transparency. Structure. Compounding Trust.
+        </p>
 
         <div style={styles.actions}>
           <Link href="/vault" style={styles.primaryButton}>
             Explore Founder Vault
           </Link>
+
           <Link href="/research" style={styles.secondaryButton}>
             Read Research
           </Link>
@@ -54,6 +58,9 @@ const styles = {
     fontWeight: 800,
     margin: '0 0 18px',
   },
+  highlight: {
+    color: '#22c55e',
+  },
   subtitle: {
     color: '#b8c7d9',
     fontSize: '18px',
@@ -77,6 +84,7 @@ const styles = {
     fontWeight: 700,
     background: '#22c55e',
     color: '#081120',
+    boxShadow: '0 10px 30px rgba(34, 197, 94, 0.24)',
   },
   secondaryButton: {
     display: 'inline-block',
