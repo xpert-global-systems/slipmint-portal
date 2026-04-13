@@ -1,20 +1,21 @@
-
 import Link from 'next/link'
+import { siteConfig } from '../lib/siteConfig'
 
 export default function Navbar() {
   return (
     <header style={styles.header}>
       <div style={styles.container}>
         <Link href="/" style={styles.brandWrap}>
-          <div style={styles.logo}>X</div>
+          <div style={styles.logo}>S</div>
           <div>
-            <div style={styles.brand}>Xpert Forex Trade</div>
-            <div style={styles.tag}>Professional Trading Platform</div>
+            <div style={styles.brand}>{siteConfig.name}</div>
+            <div style={styles.tag}>Crypto Infrastructure Platform</div>
           </div>
         </Link>
 
         <nav style={styles.nav}>
           <Link href="/" style={styles.navLink}>Home</Link>
+          <Link href="/research" style={styles.navLink}>Research</Link>
           <Link href="/performance" style={styles.navLink}>Performance</Link>
           <Link href="/vault" style={styles.navLink}>Founder Vault</Link>
           <Link href="/faq" style={styles.navLink}>FAQ</Link>
