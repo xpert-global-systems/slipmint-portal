@@ -1,10 +1,75 @@
+import Link from 'next/link'
+
 export default function Footer() {
   return (
-    <div className="container">
-      <hr />
-      <p style={{ marginTop: "1rem" }}>
-        © {new Date().getFullYear()} SlipMint. All rights reserved.
-      </p>
-    </div>
+    <footer style={styles.footer}>
+      <div style={styles.container}>
+        <div style={styles.left}>
+          <h3 style={styles.brand}>Xpert Forex Trade</h3>
+          <p style={styles.text}>
+            A modern forex platform focused on market insight, trading clarity,
+            and disciplined decision-making.
+          </p>
+        </div>
+
+        <div style={styles.links}>
+          <Link href="/" style={styles.link}>Home</Link>
+          <Link href="/performance" style={styles.link}>Performance</Link>
+          <Link href="/vault" style={styles.link}>Founder Vault</Link>
+          <Link href="/faq" style={styles.link}>FAQ</Link>
+        </div>
+      </div>
+
+      <div style={styles.copy}>
+        © {new Date().getFullYear()} Xpert Forex Trade. All rights reserved.
+      </div>
+    </footer>
   )
+}
+
+const styles = {
+  footer: {
+    borderTop: '1px solid rgba(255,255,255,0.08)',
+    marginTop: '40px',
+    background: '#07101d',
+    color: '#ffffff',
+  },
+  container: {
+    maxWidth: '1180px',
+    margin: '0 auto',
+    padding: '32px 20px 20px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '24px',
+    flexWrap: 'wrap',
+  },
+  left: {
+    maxWidth: '520px',
+  },
+  brand: {
+    margin: 0,
+    fontSize: '20px',
+  },
+  text: {
+    color: '#a9b8c9',
+    lineHeight: 1.7,
+    marginTop: '10px',
+    fontSize: '15px',
+  },
+  links: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
+  link: {
+    color: '#dce7f3',
+    textDecoration: 'none',
+    fontSize: '14px',
+  },
+  copy: {
+    textAlign: 'center',
+    color: '#7f93aa',
+    fontSize: '13px',
+    padding: '0 20px 24px',
+  },
 }
