@@ -6,8 +6,8 @@ export default function NewsletterForm() {
           <span style={styles.tag}>Stay Updated</span>
           <h2 style={styles.title}>Get market insights and platform updates</h2>
           <p style={styles.text}>
-            Join our mailing list to receive trading insights, company updates,
-            and important platform news from Xpert Forex Trade.
+            Join our mailing list to receive research updates, insights,
+            and important platform news from SlipMint.
           </p>
         </div>
 
