@@ -11,12 +11,27 @@ export default function NewsletterForm() {
           </p>
         </div>
 
-        <form style={styles.form}>
+        {/* FORMSPREE FORM WITH REDIRECT */}
+        <form
+          style={styles.form}
+          action="https://formspree.io/f/meopldkp"
+          method="POST"
+        >
+          {/* REDIRECT AFTER SUBMISSION */}
+          <input
+            type="hidden"
+            name="_next"
+            value="https://slipmint-portal.vercel.app/vault"
+          />
+
           <input
             type="email"
+            name="email"
             placeholder="Enter your email address"
+            required
             style={styles.input}
           />
+
           <button type="submit" style={styles.button}>
             Subscribe
           </button>
