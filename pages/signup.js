@@ -1,51 +1,43 @@
-// pages/signup.js
-"use client";
-import { useState } from "react";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { db } from "../lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [referralCode, setReferralCode] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const { email, password, fullName, phone, occupation } = e.target.elements;
 
-  const handleSignup = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password, referralCode }),
-    });
+    try {
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+      const user = userCredential.user;
 
-    const data = await res.json();
+      // Save extra details in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        fullName: fullName.value,
+        phone: phone.value,
+        occupation: occupation.value,
+        email: email.value,
+      });
 
-    if (data.token) {
-      window.location.href = "/dashboard";
-    } else {
-      alert("Signup failed");
+      alert("Signup successful!");
+    } catch (err) {
+      console.error(err);
+      alert("Signup failed.");
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Create Account</h1>
-
-      <input
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <input
-        placeholder="Referral Code (optional)"
-        onChange={(e) => setReferralCode(e.target.value)}
-      />
-
-      <button onClick={handleSignup}>Sign Up</button>
+    <div>
+      <h1>Register</h1>
+      <form onSubmit={handleSubmit}>
+        <input type="text" name="fullName" placeholder="Full Name" required />
+        <input type="text" name="phone" placeholder="Phone Number" required />
+        <input type="text" name="occupation" placeholder="Occupation" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Sign Up</button>
+      </form>
     </div>
   );
 }
