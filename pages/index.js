@@ -17,6 +17,15 @@ export default function Home() {
         <Link href="/research" className={styles.secondaryButton}>
           Read Research
         </Link>
+
+        <a 
+          href="https://t.me/slipmintsignals" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={styles.telegramButton}
+        >
+          Join Telegram
+        </a>
       </div>
 
       <section className={styles.featuresSection}>
@@ -55,6 +64,41 @@ export default function Home() {
               experience.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.affiliatesSection}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Partners</span>
+          <h2>Trusted Trading Platforms</h2>
+          <p>Trade with our verified affiliate partners</p>
+        </div>
+
+        <div className={styles.affiliateLinks}>
+          <a 
+            href="https://www.gate.io/share/VQQRBWXZBW" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.affiliateButton}
+          >
+            Trade on Gate.io
+          </a>
+          <a 
+            href="https://one.exnessonelink.com/a/c_5ufq543auz?platform=mobile" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.affiliateButton}
+          >
+            Trade on Exness (Mobile)
+          </a>
+          <a 
+            href="https://one.exnessonelink.com/boarding/sign-up/a/c_5ufq543auz" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.affiliateButton}
+          >
+            Trade on Exness (Web)
+          </a>
         </div>
       </section>
 
