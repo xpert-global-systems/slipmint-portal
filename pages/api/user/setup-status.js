@@ -1,7 +1,7 @@
 // Check if user has completed onboarding
 // Returns: { isNew: boolean, step: 'profile' | 'wallet' | 'investment' | 'complete' }
 
-import { db } from '../../lib/firebase';
+import { db } from '../../../lib/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 
 export default async function handler(req, res) {
