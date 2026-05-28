@@ -6,4 +6,3 @@ export default function handler(req, res) {
     authDomain: process.env.FIREBASE_AUTH_DOMAIN ? "Loaded" : "Missing"
   });
 }
-
