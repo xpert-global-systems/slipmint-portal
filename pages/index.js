@@ -1,3 +1,5 @@
+"use client";
+
 import Layout from '../components/Layout'
 import Hero from '../components/Hero'
 import NewsletterForm from '../components/NewsletterForm'
@@ -5,6 +7,10 @@ import Link from 'next/link'
 import styles from './index.module.css'
 
 export default function Home() {
+
+  // 🔥 This will show you if Vercel is injecting your Firebase env vars
+  console.log("FIREBASE KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+
   return (
     <Layout>
       <Hero />
@@ -103,6 +109,9 @@ export default function Home() {
       </section>
 
       <NewsletterForm />
+    </Layout>
+  )
+}
     </Layout>
   )
 }
