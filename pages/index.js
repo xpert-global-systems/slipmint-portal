@@ -111,47 +111,41 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* TESTIMONIALS — IMPROVED */}
-      <section className={`${styles.testimonialsSection} ${styles.fadeIn}`}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Community Insight</span>
-          <h2>What Traders Say</h2>
-        </div>
+      {/* TESTIMONIALS */}
+      <section className={`${styles.testimonials} ${styles.fadeIn}`}>
+        <h2>What Traders Say</h2>
 
         <div className={styles.testimonialGrid}>
           <div className={styles.testimonialCard}>
-            <p>“SlipMint changed how I analyze the market.”</p>
-            <span>— Daniel O.</span>
+            <p>"SlipMint changed how I analyze the market."</p>
+            <span>- Daniel O.</span>
           </div>
 
           <div className={styles.testimonialCard}>
-            <p>“The Founder Vault is worth every second.”</p>
-            <span>— Chioma A.</span>
+            <p>"The Founder Vault is worth every second."</p>
+            <span>- Chioma A.</span>
           </div>
 
           <div className={styles.testimonialCard}>
-            <p>“The research is clean, structured, and actionable.”</p>
-            <span>— Kelvin M.</span>
+            <p>"The research is clean, structured, and actionable."</p>
+            <span>- Kelvin M.</span>
           </div>
         </div>
       </section>
 
       <div className={styles.sectionDivider}></div>
 
-      {/* MEMBERSHIP — IMPROVED */}
-      <section className={`${styles.membershipSection} ${styles.fadeIn}`}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Membership</span>
-          <h2>Choose Your Access Level</h2>
-        </div>
+      {/* PRICING */}
+      <section className={`${styles.pricingSection} ${styles.fadeIn}`}>
+        <h2>Membership Levels</h2>
 
-        <div className={styles.membershipGrid}>
-          <div className={styles.membershipCard}>
+        <div className={styles.pricingGrid}>
+          <div className={styles.pricingCard}>
             <h3>Free</h3>
             <p>Basic research + weekly insights</p>
           </div>
 
-          <div className={styles.membershipCard}>
+          <div className={styles.pricingCard}>
             <h3>Founder Vault</h3>
             <p>Premium notes, private research, and strategy</p>
           </div>
