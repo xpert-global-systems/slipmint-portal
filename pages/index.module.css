@@ -1,233 +1,248 @@
-"use client";
-
-import Layout from '../components/Layout'
-import Hero from '../components/Hero'
-import NewsletterForm from '../components/NewsletterForm'
-import Link from 'next/link'
-import styles from './index.module.css'
-import { useEffect, useState } from 'react'
-
-export default function Home() {
-
-  const [news, setNews] = useState([]);
-
-  useEffect(() => {
-    async function loadNews() {
-      try {
-        const res = await fetch('/api/news');
-        const data = await res.json();
-        setNews(data.news?.data || []);
-      } catch (err) {
-        console.error("Failed to load news", err);
-      }
-    }
-    loadNews();
-  }, []);
-
-  return (
-    <Layout>
-
-      {/* HERO */}
-      <div className={styles.heroWrapper}>
-        <div className={styles.heroGlow}></div>
-        <Hero />
-      </div>
-
-      {/* ACTION BUTTONS */}
-      <div className={styles.actions}>
-        <Link href="/vault" className={styles.primaryButton}>
-          Explore Founder Vault
-        </Link>
-
-        <Link href="/research" className={styles.secondaryButton}>
-          Read Research
-        </Link>
-
-        <a 
-          href="https://t.me/slipmintsignals" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className={styles.telegramButton}
-        >
-          Join Telegram
-        </a>
-      </div>
-
-      <div className={styles.sectionDivider}></div>
-
-      {/* STATS */}
-      <section className={`${styles.statsSection} ${styles.fadeIn}`}>
-        <div className={styles.statsGrid}>
-          <div className={styles.statBox}>
-            <h3>12,400+</h3>
-            <p>Weekly Readers</p>
-          </div>
-
-          <div className={styles.statBox}>
-            <h3>3+ Years</h3>
-            <p>Market Research</p>
-          </div>
-
-          <div className={styles.statBox}>
-            <h3>98%</h3>
-            <p>User Satisfaction</p>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.sectionDivider}></div>
-
-      {/* FEATURES */}
-      <section className={`${styles.featuresSection} ${styles.fadeIn}`}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Why SlipMint</span>
-          <h2>Built for structure, clarity, and trust</h2>
-          <p>
-            SlipMint is designed as a modern crypto infrastructure platform
-            focused on research, transparency, and disciplined growth.
-          </p>
-        </div>
-
-        <div className={styles.featureGrid}>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>01</div>
-            <h3>Research</h3>
-            <p>Structured crypto insights, market commentary, and weekly analysis.</p>
-          </div>
-
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>02</div>
-            <h3>Founder Vault</h3>
-            <p>Premium content, private notes, and deeper strategic ideas.</p>
-          </div>
-
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>03</div>
-            <h3>Transparency</h3>
-            <p>A cleaner and more trustworthy digital experience.</p>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.sectionDivider}></div>
-
-      {/* TESTIMONIALS */}
-      <section className={`${styles.testimonials} ${styles.fadeIn}`}>
-        <h2>What Traders Say</h2>
-
-        <div className={styles.testimonialGrid}>
-          <div className={styles.testimonialCard}>
-            <p>"SlipMint changed how I analyze the market."</p>
-            <span>- Daniel O.</span>
-          </div>
-
-          <div className={styles.testimonialCard}>
-            <p>"The Founder Vault is worth every second."</p>
-            <span>- Chioma A.</span>
-          </div>
-
-          <div className={styles.testimonialCard}>
-            <p>"The research is clean, structured, and actionable."</p>
-            <span>- Kelvin M.</span>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.sectionDivider}></div>
-
-      {/* PRICING */}
-      <section className={`${styles.pricingSection} ${styles.fadeIn}`}>
-        <h2>Membership Levels</h2>
-
-        <div className={styles.pricingGrid}>
-          <div className={styles.pricingCard}>
-            <h3>Free</h3>
-            <p>Basic research + weekly insights</p>
-          </div>
-
-          <div className={styles.pricingCard}>
-            <h3>Founder Vault</h3>
-            <p>Premium notes, private research, and strategy</p>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.sectionDivider}></div>
-
-      {/* AFFILIATES */}
-      <section className={`${styles.affiliatesSection} ${styles.fadeIn}`}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Partners</span>
-          <h2>Trusted Trading Platforms</h2>
-          <p>Trade with our verified affiliate partners</p>
-        </div>
-
-        <div className={styles.affiliateLinks}>
-          <a 
-            href="https://www.gate.io/share/VQQRBWXZBW" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.affiliateButton}
-          >
-            Trade on Gate.io
-          </a>
-
-          <a 
-            href="https://one.exnessonelink.com/a/c_5ufq543auz?platform=mobile" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.affiliateButton}
-          >
-            Trade on Exness (Mobile)
-          </a>
-
-          <a 
-            href="https://one.exnessonelink.com/boarding/sign-up/a/c_5ufq543auz" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.affiliateButton}
-          >
-            Trade on Exness (Web)
-          </a>
-        </div>
-      </section>
-
-      <div className={styles.sectionDivider}></div>
-
-      {/* LATEST CRYPTO NEWS */}
-      <section className={styles.newsSection}>
-        <h2 className={styles.newsTitle}>Latest Crypto News</h2>
-
-        <div className={styles.newsGrid}>
-          {news.slice(0, 6).map((item, i) => (
-            <a 
-              key={i} 
-              href={item.news_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className={styles.newsCard}
-            >
-              <h3>{item.title}</h3>
-              <p>{item.source_name}</p>
-              <span>{new Date(item.date).toLocaleString()}</span>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      {/* NEWSLETTER */}
-      <NewsletterForm />
-
-      {/* FLOATING CTA */}
-      <a href="/vault" className={styles.floatingCTA}>
-        Access Founder Vault
-      </a>
-
-    </Layout>
-  )
-}
 /* ========================= */
-/*       LATEST NEWS         */
+/* GLOBAL ANIMATION */
+/* ========================= */
+
+.fadeIn {
+  animation: fadeIn 0.8s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================= */
+/* HERO SECTION */
+/* ========================= */
+
+.heroWrapper {
+  position: relative;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.heroGlow {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(0,232,122,0.25), transparent 70%);
+  filter: blur(60px);
+  z-index: -1;
+}
+
+/* ========================= */
+/* ACTION BUTTONS */
+/* ========================= */
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  background: #00e87a;
+  padding: 12px 22px;
+  border-radius: 10px;
+  color: #0f1b2d;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secondaryButton {
+  background: transparent;
+  border: 1px solid #00e87a;
+  padding: 12px 22px;
+  border-radius: 10px;
+  color: #00e87a;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.telegramButton {
+  background: #229ED9;
+  padding: 12px 22px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ========================= */
+/* SECTION DIVIDER */
+/* ========================= */
+
+.sectionDivider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 60px 0;
+}
+
+/* ========================= */
+/* STATS */
+/* ========================= */
+
+.statsSection {
+  text-align: center;
+}
+
+.statsGrid {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.statBox h3 {
+  font-size: 32px;
+  color: #00e87a;
+}
+
+.statBox p {
+  color: #9ca3af;
+}
+
+/* ========================= */
+/* FEATURES */
+/* ========================= */
+
+.featuresSection {
+  max-width: 1100px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.sectionTag {
+  color: #00e87a;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.featureCard {
+  background: #0f1b2d;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.featureIcon {
+  font-size: 22px;
+  font-weight: 800;
+  color: #00e87a;
+  margin-bottom: 10px;
+}
+
+/* ========================= */
+/* TESTIMONIALS */
+/* ========================= */
+
+.testimonials {
+  max-width: 1100px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+.testimonialGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.testimonialCard {
+  background: #0f1b2d;
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 15px;
+  color: #e8eaf0;
+}
+
+.testimonialCard span {
+  display: block;
+  margin-top: 10px;
+  color: #00e87a;
+  font-size: 14px;
+}
+
+/* ========================= */
+/* MEMBERSHIP */
+/* ========================= */
+
+.pricingSection {
+  max-width: 1100px;
+  margin: auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.pricingGrid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.pricingCard {
+  background: #0f1b2d;
+  padding: 24px;
+  border-radius: 14px;
+  width: 260px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.pricingCard h3 {
+  color: #00e87a;
+  margin-bottom: 10px;
+}
+
+/* ========================= */
+/* AFFILIATES */
+/* ========================= */
+
+.affiliatesSection {
+  max-width: 1100px;
+  margin: auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.affiliateLinks {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.affiliateButton {
+  background: #00e87a;
+  padding: 12px 22px;
+  border-radius: 10px;
+  color: #0f1b2d;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ========================= */
+/* NEWS SECTION */
 /* ========================= */
 
 .newsSection {
@@ -259,7 +274,6 @@ export default function Home() {
   transition: all 0.25s ease;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   min-height: 180px;
 }
 
@@ -271,7 +285,6 @@ export default function Home() {
 .newsCard h3 {
   font-size: 18px;
   margin-bottom: 8px;
-  line-height: 1.3;
 }
 
 .newsCard p {
@@ -284,4 +297,21 @@ export default function Home() {
   color: #00e87a;
   font-size: 12px;
   margin-top: auto;
+}
+
+/* ========================= */
+/* FLOATING CTA */
+/* ========================= */
+
+.floatingCTA {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #00e87a;
+  padding: 14px 22px;
+  border-radius: 12px;
+  color: #0f1b2d;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 20px rgba(0,232,122,0.3);
 }
