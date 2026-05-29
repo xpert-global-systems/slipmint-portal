@@ -111,57 +111,49 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* TESTIMONIALS */}
-      <section className={`${styles.researchBlock} ${styles.fadeIn}`}>
-        <div className={styles.blockHeader}>
-          <span className={styles.blockTag}>Community Insight</span>
-          <h2 className={styles.blockTitle}>What Traders Say</h2>
+      {/* TESTIMONIALS — IMPROVED */}
+      <section className={`${styles.testimonialsSection} ${styles.fadeIn}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Community Insight</span>
+          <h2>What Traders Say</h2>
         </div>
 
-        <div className={styles.horizontalCards}>
-          <div className={styles.horizontalCard}>
-            <p className={styles.cardQuote}>
-              “SlipMint changed how I analyze the market.”
-            </p>
-            <span className={styles.cardAuthor}>Daniel O.</span>
+        <div className={styles.testimonialGrid}>
+          <div className={styles.testimonialCard}>
+            <p>“SlipMint changed how I analyze the market.”</p>
+            <span>— Daniel O.</span>
           </div>
 
-          <div className={styles.horizontalCard}>
-            <p className={styles.cardQuote}>
-              “The Founder Vault is worth every second.”
-            </p>
-            <span className={styles.cardAuthor}>Chioma A.</span>
+          <div className={styles.testimonialCard}>
+            <p>“The Founder Vault is worth every second.”</p>
+            <span>— Chioma A.</span>
           </div>
 
-          <div className={styles.horizontalCard}>
-            <p className={styles.cardQuote}>
-              “The research is clean, structured, and actionable.”
-            </p>
-            <span className={styles.cardAuthor}>Kelvin M.</span>
+          <div className={styles.testimonialCard}>
+            <p>“The research is clean, structured, and actionable.”</p>
+            <span>— Kelvin M.</span>
           </div>
         </div>
       </section>
 
       <div className={styles.sectionDivider}></div>
 
-      {/* MEMBERSHIP */}
-      <section className={`${styles.researchBlock} ${styles.fadeIn}`}>
-        <div className={styles.blockHeader}>
-          <span className={styles.blockTag}>Membership</span>
-          <h2 className={styles.blockTitle}>Choose Your Access Level</h2>
+      {/* MEMBERSHIP — IMPROVED */}
+      <section className={`${styles.membershipSection} ${styles.fadeIn}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Membership</span>
+          <h2>Choose Your Access Level</h2>
         </div>
 
-        <div className={styles.membershipMatrix}>
-          <div className={styles.matrixCard}>
-            <h3 className={styles.matrixTitle}>Free</h3>
-            <p className={styles.matrixDesc}>Basic research + weekly insights</p>
+        <div className={styles.membershipGrid}>
+          <div className={styles.membershipCard}>
+            <h3>Free</h3>
+            <p>Basic research + weekly insights</p>
           </div>
 
-          <div className={styles.matrixCard}>
-            <h3 className={styles.matrixTitle}>Founder Vault</h3>
-            <p className={styles.matrixDesc}>
-              Premium notes, private research, and strategy
-            </p>
+          <div className={styles.membershipCard}>
+            <h3>Founder Vault</h3>
+            <p>Premium notes, private research, and strategy</p>
           </div>
         </div>
       </section>
