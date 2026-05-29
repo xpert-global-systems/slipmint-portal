@@ -8,13 +8,13 @@ import styles from './index.module.css'
 
 export default function Home() {
 
-  // 🔥 This will show you if Vercel is injecting your Firebase env vars
-  console.log("FIREBASE KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-
   return (
     <Layout>
+
+      {/* HERO */}
       <Hero />
 
+      {/* ACTION BUTTONS */}
       <div className={styles.actions}>
         <Link href="/vault" className={styles.primaryButton}>
           Explore Founder Vault
@@ -34,7 +34,11 @@ export default function Home() {
         </a>
       </div>
 
-      <section className={styles.featuresSection}>
+      {/* SECTION DIVIDER */}
+      <div className={styles.sectionDivider}></div>
+
+      {/* FEATURES */}
+      <section className={`${styles.featuresSection} ${styles.fadeIn}`}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTag}>Why SlipMint</span>
           <h2>Built for structure, clarity, and trust</h2>
@@ -48,32 +52,73 @@ export default function Home() {
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>01</div>
             <h3>Research</h3>
-            <p>
-              Read structured crypto insights, market commentary, and weekly
-              analysis.
-            </p>
+            <p>Structured crypto insights, market commentary, and weekly analysis.</p>
           </div>
 
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>02</div>
             <h3>Founder Vault</h3>
-            <p>
-              Access premium content, private notes, and deeper strategic ideas.
-            </p>
+            <p>Premium content, private notes, and deeper strategic ideas.</p>
           </div>
 
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>03</div>
             <h3>Transparency</h3>
-            <p>
-              Present your platform with a cleaner and more trustworthy digital
-              experience.
-            </p>
+            <p>A cleaner and more trustworthy digital experience.</p>
           </div>
         </div>
       </section>
 
-      <section className={styles.affiliatesSection}>
+      {/* SECTION DIVIDER */}
+      <div className={styles.sectionDivider}></div>
+
+      {/* TESTIMONIALS */}
+      <section className={`${styles.testimonials} ${styles.fadeIn}`}>
+        <h2>What Traders Say</h2>
+
+        <div className={styles.testimonialGrid}>
+          <div className={styles.testimonialCard}>
+            <p>"SlipMint changed how I analyze the market."</p>
+            <span>- Daniel O.</span>
+          </div>
+
+          <div className={styles.testimonialCard}>
+            <p>"The Founder Vault is worth every second."</p>
+            <span>- Chioma A.</span>
+          </div>
+
+          <div className={styles.testimonialCard}>
+            <p>"The research is clean, structured, and actionable."</p>
+            <span>- Kelvin M.</span>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION DIVIDER */}
+      <div className={styles.sectionDivider}></div>
+
+      {/* PRICING */}
+      <section className={`${styles.pricingSection} ${styles.fadeIn}`}>
+        <h2>Membership Levels</h2>
+
+        <div className={styles.pricingGrid}>
+          <div className={styles.pricingCard}>
+            <h3>Free</h3>
+            <p>Basic research + weekly insights</p>
+          </div>
+
+          <div className={styles.pricingCard}>
+            <h3>Founder Vault</h3>
+            <p>Premium notes, private research, and strategy</p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION DIVIDER */}
+      <div className={styles.sectionDivider}></div>
+
+      {/* AFFILIATES */}
+      <section className={`${styles.affiliatesSection} ${styles.fadeIn}`}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTag}>Partners</span>
           <h2>Trusted Trading Platforms</h2>
@@ -89,6 +134,7 @@ export default function Home() {
           >
             Trade on Gate.io
           </a>
+
           <a 
             href="https://one.exnessonelink.com/a/c_5ufq543auz?platform=mobile" 
             target="_blank" 
@@ -97,6 +143,7 @@ export default function Home() {
           >
             Trade on Exness (Mobile)
           </a>
+
           <a 
             href="https://one.exnessonelink.com/boarding/sign-up/a/c_5ufq543auz" 
             target="_blank" 
@@ -108,10 +155,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* NEWSLETTER */}
       <NewsletterForm />
-    </Layout>
-  )
-}
+
     </Layout>
   )
 }
