@@ -11,13 +11,13 @@ export default function Home() {
   return (
     <Layout>
 
-      {/* HERO WITH STRUCTURED GLOW */}
+      {/* HERO */}
       <div className={styles.heroWrapper}>
         <div className={styles.heroGlow}></div>
         <Hero />
       </div>
 
-      {/* PRIMARY ACTIONS */}
+      {/* ACTION BUTTONS */}
       <div className={styles.actions}>
         <Link href="/vault" className={styles.primaryButton}>
           Explore Founder Vault
@@ -39,7 +39,7 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* STATS — RESEARCH PLATFORM STYLE */}
+      {/* STATS */}
       <section className={`${styles.statsSection} ${styles.fadeIn}`}>
         <div className={styles.statsGrid}>
           <div className={styles.statBox}>
@@ -95,43 +95,57 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* TESTIMONIALS */}
-      <section className={`${styles.testimonials} ${styles.fadeIn}`}>
-        <h2>What Traders Say</h2>
+      {/* TESTIMONIALS — RESEARCH STYLE */}
+      <section className={`${styles.researchBlock} ${styles.fadeIn}`}>
+        <div className={styles.blockHeader}>
+          <span className={styles.blockTag}>Community Insight</span>
+          <h2 className={styles.blockTitle}>What Traders Say</h2>
+        </div>
 
-        <div className={styles.testimonialGrid}>
-          <div className={styles.testimonialCard}>
-            <p>"SlipMint changed how I analyze the market."</p>
-            <span>- Daniel O.</span>
+        <div className={styles.horizontalCards}>
+          <div className={styles.horizontalCard}>
+            <p className={styles.cardQuote}>
+              “SlipMint changed how I analyze the market.”
+            </p>
+            <span className={styles.cardAuthor}>Daniel O.</span>
           </div>
 
-          <div className={styles.testimonialCard}>
-            <p>"The Founder Vault is worth every second."</p>
-            <span>- Chioma A.</span>
+          <div className={styles.horizontalCard}>
+            <p className={styles.cardQuote}>
+              “The Founder Vault is worth every second.”
+            </p>
+            <span className={styles.cardAuthor}>Chioma A.</span>
           </div>
 
-          <div className={styles.testimonialCard}>
-            <p>"The research is clean, structured, and actionable."</p>
-            <span>- Kelvin M.</span>
+          <div className={styles.horizontalCard}>
+            <p className={styles.cardQuote}>
+              “The research is clean, structured, and actionable.”
+            </p>
+            <span className={styles.cardAuthor}>Kelvin M.</span>
           </div>
         </div>
       </section>
 
       <div className={styles.sectionDivider}></div>
 
-      {/* PRICING */}
-      <section className={`${styles.pricingSection} ${styles.fadeIn}`}>
-        <h2>Membership Levels</h2>
+      {/* MEMBERSHIP — STRUCTURED MATRIX */}
+      <section className={`${styles.researchBlock} ${styles.fadeIn}`}>
+        <div className={styles.blockHeader}>
+          <span className={styles.blockTag}>Membership</span>
+          <h2 className={styles.blockTitle}>Choose Your Access Level</h2>
+        </div>
 
-        <div className={styles.pricingGrid}>
-          <div className={styles.pricingCard}>
-            <h3>Free</h3>
-            <p>Basic research + weekly insights</p>
+        <div className={styles.membershipMatrix}>
+          <div className={styles.matrixCard}>
+            <h3 className={styles.matrixTitle}>Free</h3>
+            <p className={styles.matrixDesc}>Basic research + weekly insights</p>
           </div>
 
-          <div className={styles.pricingCard}>
-            <h3>Founder Vault</h3>
-            <p>Premium notes, private research, and strategy</p>
+          <div className={styles.matrixCard}>
+            <h3 className={styles.matrixTitle}>Founder Vault</h3>
+            <p className={styles.matrixDesc}>
+              Premium notes, private research, and strategy
+            </p>
           </div>
         </div>
       </section>
