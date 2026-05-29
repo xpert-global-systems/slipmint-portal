@@ -11,10 +11,13 @@ export default function Home() {
   return (
     <Layout>
 
-      {/* HERO */}
-      <Hero />
+      {/* HERO WITH STRUCTURED GLOW */}
+      <div className={styles.heroWrapper}>
+        <div className={styles.heroGlow}></div>
+        <Hero />
+      </div>
 
-      {/* ACTION BUTTONS */}
+      {/* PRIMARY ACTIONS */}
       <div className={styles.actions}>
         <Link href="/vault" className={styles.primaryButton}>
           Explore Founder Vault
@@ -34,7 +37,28 @@ export default function Home() {
         </a>
       </div>
 
-      {/* SECTION DIVIDER */}
+      <div className={styles.sectionDivider}></div>
+
+      {/* STATS — RESEARCH PLATFORM STYLE */}
+      <section className={`${styles.statsSection} ${styles.fadeIn}`}>
+        <div className={styles.statsGrid}>
+          <div className={styles.statBox}>
+            <h3>12,400+</h3>
+            <p>Weekly Readers</p>
+          </div>
+
+          <div className={styles.statBox}>
+            <h3>3+ Years</h3>
+            <p>Market Research</p>
+          </div>
+
+          <div className={styles.statBox}>
+            <h3>98%</h3>
+            <p>User Satisfaction</p>
+          </div>
+        </div>
+      </section>
+
       <div className={styles.sectionDivider}></div>
 
       {/* FEATURES */}
@@ -69,7 +93,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION DIVIDER */}
       <div className={styles.sectionDivider}></div>
 
       {/* TESTIMONIALS */}
@@ -94,7 +117,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION DIVIDER */}
       <div className={styles.sectionDivider}></div>
 
       {/* PRICING */}
@@ -114,7 +136,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION DIVIDER */}
       <div className={styles.sectionDivider}></div>
 
       {/* AFFILIATES */}
@@ -157,6 +178,11 @@ export default function Home() {
 
       {/* NEWSLETTER */}
       <NewsletterForm />
+
+      {/* FLOATING CTA */}
+      <a href="/vault" className={styles.floatingCTA}>
+        Access Founder Vault
+      </a>
 
     </Layout>
   )
