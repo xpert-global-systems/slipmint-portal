@@ -5,8 +5,24 @@ import Hero from '../components/Hero'
 import NewsletterForm from '../components/NewsletterForm'
 import Link from 'next/link'
 import styles from './index.module.css'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+
+  const [news, setNews] = useState([]);
+
+  useEffect(() => {
+    async function loadNews() {
+      try {
+        const res = await fetch('/api/news');
+        const data = await res.json();
+        setNews(data.news?.data || []);
+      } catch (err) {
+        console.error("Failed to load news", err);
+      }
+    }
+    loadNews();
+  }, []);
 
   return (
     <Layout>
@@ -95,7 +111,7 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* TESTIMONIALS — RESEARCH STYLE */}
+      {/* TESTIMONIALS */}
       <section className={`${styles.researchBlock} ${styles.fadeIn}`}>
         <div className={styles.blockHeader}>
           <span className={styles.blockTag}>Community Insight</span>
@@ -128,7 +144,7 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* MEMBERSHIP — STRUCTURED MATRIX */}
+      {/* MEMBERSHIP */}
       <section className={`${styles.researchBlock} ${styles.fadeIn}`}>
         <div className={styles.blockHeader}>
           <span className={styles.blockTag}>Membership</span>
@@ -187,6 +203,29 @@ export default function Home() {
           >
             Trade on Exness (Web)
           </a>
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* LATEST CRYPTO NEWS */}
+      <section className={styles.newsSection}>
+        <h2 className={styles.newsTitle}>Latest Crypto News</h2>
+
+        <div className={styles.newsGrid}>
+          {news.slice(0, 6).map((item, i) => (
+            <a 
+              key={i} 
+              href={item.news_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={styles.newsCard}
+            >
+              <h3>{item.title}</h3>
+              <p>{item.source_name}</p>
+              <span>{new Date(item.date).toLocaleString()}</span>
+            </a>
+          ))}
         </div>
       </section>
 
