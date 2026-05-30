@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { signup } from "../services/auth"; // <-- use your backend signup
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -17,36 +18,17 @@ export default function Signup() {
     setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName,
-          phone,
-          occupation,
-          email,
-          password,
-          referral,
-        }),
-      });
+    const result = await signup(email, password, fullName);
 
-      const data = await res.json();
+    if (result.success) {
+      localStorage.setItem("token", result.token);
+      setSuccess(true);
 
-      if (data.success) {
-        setSuccess(true);
-        // Redirect to onboarding after 1.5s
-        setTimeout(() => {
-          window.location.href = "/onboarding";
-        }, 1500);
-      } else {
-        setError(data.error || "Signup failed");
-        setLoading(false);
-      }
-    } catch (error) {
-      setError("Network error. Try again.");
+      setTimeout(() => {
+        window.location.href = "/onboarding";
+      }, 1500);
+    } else {
+      setError(result.message || "Signup failed");
       setLoading(false);
     }
   };
