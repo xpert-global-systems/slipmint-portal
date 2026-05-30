@@ -1,22 +1,24 @@
 import { useState } from "react";
 import Layout from "../components/Layout";
 import Link from "next/link";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { login } from "../services/auth"; // <-- your backend login function
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      const auth = getAuth();
-      await signInWithEmailAndPassword(auth, email, password);
-      // Redirect to dashboard after successful login
+    setError("");
+
+    const result = await login(email, password);
+
+    if (result.success) {
+      localStorage.setItem("token", result.token);
       window.location.href = "/dashboard";
-    } catch (err) {
-      console.error(err);
-      alert("Login failed: " + err.message);
+    } else {
+      setError(result.message || "Login failed");
     }
   };
 
@@ -29,6 +31,10 @@ export default function Login() {
           <p style={styles.subtitle}>
             Access the Founder Vault, premium research, and member-only updates.
           </p>
+
+          {error && (
+            <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>
+          )}
 
           <form onSubmit={handleLogin} style={styles.form}>
             <label htmlFor="email" style={styles.label}>Email</label>
