@@ -1,391 +1,270 @@
-// pages/dashboard.js
-// Main dashboard showing user balance, performance, and account info
+"use client";
 
-import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getUser } from "../services/auth";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const auth = getAuth();
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
-      if (!authUser) {
-        window.location.href = '/login';
-        return;
-      }
+    const token = localStorage.getItem("token");
 
-      const userDoc = await getDoc(doc(db, 'users', authUser.uid));
-      const data = userDoc.data();
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-      if (!data?.profileComplete) {
-        window.location.href = '/onboarding';
-        return;
-      }
+    getUser(token)
+      .then((data) => {
+        if (!data || !data.success) {
+          localStorage.removeItem("token");
+          router.push("/login");
+        } else {
+          setUser(data.user);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        router.push("/login");
+      });
+  }, [router]);
 
-      setUser(authUser);
-      setUserData(data);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
 
   if (loading) {
     return (
-      <div style={styles.loadingPage}>
-        <p>Loading...</p>
+      <div className="flex h-screen w-screen items-center justify-center bg-[#081120] text-white">
+        <h2 className="text-xl font-semibold animate-pulse">
+          Loading your dashboard…
+        </h2>
       </div>
     );
   }
 
-  if (!user || !userData) {
-    return null;
-  }
+  const baseBalance = user?.balance || 0;
+  const totalInvested = user?.totalInvested || 1;
 
-  const handleLogout = async () => {
-    await auth.signOut();
-    window.location.href = '/login';
-  };
-
-  // Sample performance data (in production, fetch from Firestore)
   const performanceData = [
-    { week: 'Week 1', profit: 250, loss: 50 },
-    { week: 'Week 2', profit: 480, loss: 120 },
-    { week: 'Week 3', profit: 320, loss: 80 },
-    { week: 'Week 4', profit: 650, loss: 150 },
+    { week: "Week 1", profit: 250, loss: 50 },
+    { week: "Week 2", profit: 480, loss: 120 },
+    { week: "Week 3", profit: 320, loss: 80 },
+    { week: "Week 4", profit: 650, loss: 150 },
   ];
 
   const balanceHistory = [
-    { day: 'Mon', balance: userData.balance },
-    { day: 'Tue', balance: userData.balance + 50 },
-    { day: 'Wed', balance: userData.balance + 120 },
-    { day: 'Thu', balance: userData.balance + 180 },
-    { day: 'Fri', balance: userData.balance + 250 },
+    { day: "Mon", balance: baseBalance },
+    { day: "Tue", balance: baseBalance + 50 },
+    { day: "Wed", balance: baseBalance + 120 },
+    { day: "Thu", balance: baseBalance + 180 },
+    { day: "Fri", balance: baseBalance + 250 },
   ];
 
-  const profitData = [
-    { name: 'Profit', value: 2000 },
-    { name: 'Loss', value: 400 },
-  ];
-
-  const COLORS = ['#22c55e', '#ef4444'];
-
-  // Calculate totals
-  const totalProfit = performanceData.reduce((sum, week) => sum + week.profit, 0);
-  const totalLoss = performanceData.reduce((sum, week) => sum + week.loss, 0);
-  const roi = ((totalProfit - totalLoss) / userData.totalInvested) * 100;
+  const totalProfit = performanceData.reduce((sum, item) => sum + item.profit, 0);
+  const totalLoss = performanceData.reduce((sum, item) => sum + item.loss, 0);
+  const roi = ((totalProfit - totalLoss) / totalInvested) * 100;
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <div style={styles.headerContent}>
-          <h1 style={styles.logo}>SlipMint</h1>
+    <div className="min-h-screen w-full bg-[#081120] text-white font-sans pb-12">
+      {/* Header */}
+      <header className="border-b border-white/10 bg-[#0f1b2d] sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <h1 className="text-2xl font-bold tracking-wider text-emerald-400">
+            SlipMint
+          </h1>
           <button
             onClick={handleLogout}
-            style={styles.logoutButton}
+            className="rounded-xl bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 border border-red-500/20 transition-all hover:bg-red-500 hover:text-white"
           >
             Logout
           </button>
         </div>
-      </div>
+      </header>
 
-      <div style={styles.container}>
-        {/* Welcome Section */}
-        <div style={styles.welcomeCard}>
+      {/* Main */}
+      <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8 space-y-6">
+        {/* Welcome */}
+        <div className="flex items-center justify-between rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
           <div>
-            <p style={styles.welcomeLabel}>Welcome back!</p>
-            <h1 style={styles.welcomeName}>{userData.fullName}</h1>
+            <p className="text-sm font-medium text-[#b8c7d9]">Welcome back!</p>
+            <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">
+              {user?.displayName || user?.fullName || "User"}
+            </h1>
           </div>
-          <div style={styles.profileIcon}>👤</div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-2xl border border-white/10">
+            👤
+          </div>
         </div>
 
-        {/* Key Metrics */}
-        <div style={styles.metricsGrid}>
-          <div style={styles.metricCard}>
-            <p style={styles.metricLabel}>Current Balance</p>
-            <h2 style={styles.metricValue}>
-              ${userData.balance?.toLocaleString() || 0}
+        {/* Metrics */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <p className="text-sm text-[#b8c7d9]">Current Balance</p>
+            <h2 className="mt-2 text-3xl font-bold">
+              ${baseBalance.toLocaleString()}
             </h2>
-            <p style={styles.metricDetail}>Initial: ${userData.totalInvested?.toLocaleString() || 0}</p>
+            <p className="mt-1 text-xs text-slate-400">
+              Initial: ${(user?.totalInvested || 0).toLocaleString()}
+            </p>
           </div>
 
-          <div style={styles.metricCard}>
-            <p style={styles.metricLabel}>ROI</p>
-            <h2 style={{...styles.metricValue, color: roi > 0 ? '#22c55e' : '#ef4444'}}>
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <p className="text-sm text-[#b8c7d9]">ROI</p>
+            <h2
+              className={`mt-2 text-3xl font-bold ${
+                roi >= 0 ? "text-emerald-400" : "text-red-400"
+              }`}
+            >
               {roi.toFixed(2)}%
             </h2>
-            <p style={styles.metricDetail}>Return on investment</p>
+            <p className="mt-1 text-xs text-slate-400">Return on investment</p>
           </div>
 
-          <div style={styles.metricCard}>
-            <p style={styles.metricLabel}>Total Profit</p>
-            <h2 style={styles.metricValue}>
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <p className="text-sm text-[#b8c7d9]">Total Profit</p>
+            <h2 className="mt-2 text-3xl font-bold text-emerald-400">
               +${totalProfit.toLocaleString()}
             </h2>
-            <p style={styles.metricDetail}>This period</p>
+            <p className="mt-1 text-xs text-slate-400">This period</p>
           </div>
 
-          <div style={styles.metricCard}>
-            <p style={styles.metricLabel}>Total Loss</p>
-            <h2 style={{...styles.metricValue, color: '#ef4444'}}>
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <p className="text-sm text-[#b8c7d9]">Total Loss</p>
+            <h2 className="mt-2 text-3xl font-bold text-red-400">
               -${totalLoss.toLocaleString()}
             </h2>
-            <p style={styles.metricDetail}>This period</p>
+            <p className="mt-1 text-xs text-slate-400">This period</p>
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div style={styles.chartsGrid}>
-          {/* Balance History */}
-          <div style={styles.chartCard}>
-            <h3 style={styles.chartTitle}>Balance History</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={balanceHistory}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="day" stroke="#b8c7d9" />
-                <YAxis stroke="#b8c7d9" />
-                <Tooltip contentStyle={{ background: '#0f1b2d', border: 'none' }} />
-                <Line type="monotone" dataKey="balance" stroke="#22c55e" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Charts */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <h3 className="text-lg font-semibold mb-4">Balance History</h3>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={balanceHistory}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <XAxis dataKey="day" stroke="#b8c7d9" />
+                  <YAxis stroke="#b8c7d9" />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#081120",
+                      border: "none",
+                      borderRadius: "10px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    dot={{ fill: "#10b981" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          {/* Profit vs Loss */}
-          <div style={styles.chartCard}>
-            <h3 style={styles.chartTitle}>Weekly Performance</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="week" stroke="#b8c7d9" />
-                <YAxis stroke="#b8c7d9" />
-                <Tooltip contentStyle={{ background: '#0f1b2d', border: 'none' }} />
-                <Legend />
-                <Bar dataKey="profit" fill="#22c55e" />
-                <Bar dataKey="loss" fill="#ef4444" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <h3 className="text-lg font-semibold mb-4">Weekly Performance</h3>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={performanceData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <XAxis dataKey="week" stroke="#b8c7d9" />
+                  <YAxis stroke="#b8c7d9" />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#081120",
+                      border: "none",
+                      borderRadius: "10px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="profit" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="loss" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
-        {/* Account Info */}
-        <div style={styles.infoGrid}>
-          <div style={styles.infoCard}>
-            <h3 style={styles.infoTitle}>Account Information</h3>
-            <div style={styles.infoField}>
-              <span style={styles.infoLabel}>Email:</span>
-              <span>{userData.email}</span>
+        {/* Info Cards */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 space-y-4">
+            <h3 className="text-lg font-semibold border-b border-white/10 pb-2">
+              Account Information
+            </h3>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#b8c7d9]">Email:</span>
+              <span className="text-white">{user?.email || "N/A"}</span>
             </div>
-            <div style={styles.infoField}>
-              <span style={styles.infoLabel}>Occupation:</span>
-              <span>{userData.occupation}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#b8c7d9]">Occupation:</span>
+              <span className="text-white">{user?.occupation || "N/A"}</span>
             </div>
-            <div style={styles.infoField}>
-              <span style={styles.infoLabel}>Phone:</span>
-              <span>{userData.phone}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#b8c7d9]">Phone:</span>
+              <span className="text-white">{user?.phone || "N/A"}</span>
             </div>
           </div>
 
-          <div style={styles.infoCard}>
-            <h3 style={styles.infoTitle}>Wallet Info</h3>
-            {userData.walletAddress ? (
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 space-y-4">
+            <h3 className="text-lg font-semibold border-b border-white/10 pb-2">
+              Wallet Info
+            </h3>
+
+            {user?.walletAddress ? (
               <>
-                <div style={styles.infoField}>
-                  <span style={styles.infoLabel}>Status:</span>
-                  <span style={{ color: '#22c55e' }}>✓ Connected</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#b8c7d9]">Status:</span>
+                  <span className="text-emerald-400 font-medium">
+                    ✓ Connected
+                  </span>
                 </div>
-                <div style={styles.infoField}>
-                  <span style={styles.infoLabel}>Address:</span>
-                  <span style={styles.walletAddress}>
-                    {userData.walletAddress.slice(0, 6)}...{userData.walletAddress.slice(-4)}
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#b8c7d9]">Address:</span>
+                  <span className="font-mono bg-white/5 px-2 py-0.5 rounded text-xs text-slate-300">
+                    {user.walletAddress.slice(0, 6)}...
+                    {user.walletAddress.slice(-4)}
                   </span>
                 </div>
               </>
             ) : (
-              <div style={styles.infoField}>
-                <span style={{ color: '#b8c7d9' }}>No wallet connected</span>
+              <div className="flex flex-col items-center justify-center py-2 text-center">
+                <span className="text-sm text-amber-400 font-medium mb-3">
+                  ⚠ No Wallet Connected
+                </span>
+                <button className="text-xs bg-emerald-500 hover:bg-emerald-600 font-bold py-2 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/10">
+                  Connect Wallet
+                </button>
               </div>
             )}
           </div>
         </div>
-
-        {/* Actions */}
-        <div style={styles.actionsGrid}>
-          <button style={styles.actionButton}>Withdraw Profit</button>
-          <button style={styles.actionButton}>View Trade History</button>
-          <button style={styles.actionButton}>Download Report</button>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: '#081120',
-    color: '#fff',
-    paddingBottom: '40px',
-  },
-  header: {
-    background: '#0f1b2d',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
-    padding: '20px 0',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-  },
-  headerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 20px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  logo: {
-    fontSize: '24px',
-    fontWeight: 700,
-    margin: 0,
-  },
-  logoutButton: {
-    padding: '8px 16px',
-    background: 'rgba(255,255,255,0.1)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '13px',
-    cursor: 'pointer',
-  },
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '40px 20px',
-  },
-  welcomeCard: {
-    background: '#0f1b2d',
-    border: '1px solid rgba(34, 197, 94, 0.2)',
-    borderRadius: '20px',
-    padding: '30px',
-    marginBottom: '30px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  welcomeLabel: {
-    color: '#b8c7d9',
-    margin: '0 0 8px',
-    fontSize: '14px',
-  },
-  welcomeName: {
-    fontSize: '32px',
-    margin: 0,
-  },
-  profileIcon: {
-    fontSize: '40px',
-  },
-  metricsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-  },
-  metricCard: {
-    background: '#0f1b2d',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '12px',
-    padding: '20px',
-  },
-  metricLabel: {
-    color: '#b8c7d9',
-    fontSize: '13px',
-    margin: '0 0 8px',
-  },
-  metricValue: {
-    fontSize: '28px',
-    margin: '0 0 8px',
-    color: '#22c55e',
-  },
-  metricDetail: {
-    color: '#818fa9',
-    fontSize: '12px',
-    margin: 0,
-  },
-  chartsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-  },
-  chartCard: {
-    background: '#0f1b2d',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '12px',
-    padding: '20px',
-  },
-  chartTitle: {
-    fontSize: '16px',
-    fontWeight: 600,
-    margin: '0 0 20px',
-  },
-  infoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-  },
-  infoCard: {
-    background: '#0f1b2d',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '12px',
-    padding: '20px',
-  },
-  infoTitle: {
-    fontSize: '16px',
-    fontWeight: 600,
-    margin: '0 0 16px',
-  },
-  infoField: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '10px 0',
-    borderBottom: '1px solid rgba(255,255,255,0.05)',
-  },
-  infoLabel: {
-    color: '#b8c7d9',
-    fontSize: '13px',
-  },
-  walletAddress: {
-    fontFamily: 'monospace',
-    fontSize: '12px',
-  },
-  actionsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-  },
-  actionButton: {
-    padding: '12px 20px',
-    background: '#22c55e',
-    color: '#081120',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '14px',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  loadingPage: {
-    minHeight: '100vh',
-    background: '#081120',
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-};
