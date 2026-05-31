@@ -12,6 +12,8 @@ export default function DebugToken() {
       if (user) {
         const t = await user.getIdToken(true);
         setToken(t);
+      } else {
+        setToken("Not logged in");
       }
     });
   }, []);
