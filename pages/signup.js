@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { signup } from "../services/auth"; // <-- use your backend signup
+import { signup } from "../services/auth"; // backend signup
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -18,18 +18,24 @@ export default function Signup() {
     setLoading(true);
     setError("");
 
-    const result = await signup(email, password, fullName);
+    try {
+      // FIXED: correct argument order
+      const result = await signup(fullName, email, password);
 
-    if (result.success) {
-      localStorage.setItem("token", result.token);
-      setSuccess(true);
+      if (result.success) {
+        localStorage.setItem("token", result.token);
+        setSuccess(true);
 
-      setTimeout(() => {
-        window.location.href = "/onboarding";
-      }, 1500);
-    } else {
-      setError(result.message || "Signup failed");
-      setLoading(false);
+        setTimeout(() => {
+          window.location.href = "/onboarding";
+        }, 1500);
+      } else {
+        setError(result.message || "Signup failed");
+      }
+    } catch (err) {
+      setError("Signup failed. Please try again.");
+    } finally {
+      setLoading(false); // FIXED: prevents freeze
     }
   };
 
