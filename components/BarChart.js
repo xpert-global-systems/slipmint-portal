@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  BarChart,
+  BarChart as ReBarChart,
   Bar,
   XAxis,
   YAxis,
@@ -22,13 +22,13 @@ const data = [
 export default function BarChart() {
   return (
     <ResponsiveContainer width="100%" height={250}>
-      <BarChart data={data}>
+      <ReBarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
         <Tooltip />
         <Bar dataKey="value" fill="#10b981" />
-      </BarChart>
+      </ReBarChart>
     </ResponsiveContainer>
   );
 }
