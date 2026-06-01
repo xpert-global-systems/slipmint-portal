@@ -138,3 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .env.local
+
+# Ignore app directory (using pages router only)
+app/
