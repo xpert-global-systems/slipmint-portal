@@ -1,4 +1,5 @@
 "use client";
+import TradeHistory from "../components/TradeHistory";
 import BarChart from "../components/BarChart";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -196,17 +197,47 @@ export default function Dashboard() {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
-            <p className="text-sm text-[#b8c7d9]">Current Balance</p>
-            <h2 className="mt-2 text-3xl font-bold">
-              ${baseBalance.toLocaleString()}
-            </h2>
-            <p className="mt-1 text-xs text-slate-400">
-              Initial: ${(user?.totalInvested || 0).toLocaleString()}
-            </p>
-          </div>
+<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
+  <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+    <p className="text-sm text-[#b8c7d9]">Current Balance</p>
+    <h2 className="mt-2 text-3xl font-bold">
+      ${baseBalance.toLocaleString()}
+    </h2>
+    <p className="mt-1 text-xs text-slate-400">
+      Initial: ${(user?.totalInvested || 0).toLocaleString()}
+    </p>
+  </div>
+
+  <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+    <p className="text-sm text-[#b8c7d9]">ROI</p>
+    <h2 className={`mt-2 text-3xl font-bold ${roi >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+      {roi.toFixed(2)}%
+    </h2>
+    <p className="mt-1 text-xs text-slate-400">Return on investment</p>
+  </div>
+
+  <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+    <p className="text-sm text-[#b8c7d9]">Total Profit</p>
+    <h2 className="mt-2 text-3xl font-bold text-emerald-400">
+      +${totalProfit.toLocaleString()}
+    </h2>
+    <p className="mt-1 text-xs text-slate-400">This period</p>
+  </div>
+
+</div>   {/* ✅ END OF METRICS GRID */}
+
+{/* Bar Chart */}
+<div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 mt-6">
+  <h3 className="text-lg font-bold mb-4">Portfolio Performance</h3>
+  <BarChart />
+</div>
+
+{/* Trade History */}
+<div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 mt-6">
+  <h3 className="text-lg font-bold mb-4">Recent Trades</h3>
+  <TradeHistory />
+</div>
           <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
             <p className="text-sm text-[#b8c7d9]">ROI</p>
             <h2
@@ -225,7 +256,7 @@ export default function Dashboard() {
               +${totalProfit.toLocaleString()}
             </h2>
             <p className="mt-1 text-xs text-slate-400">This period</p>
-          </div>
+          </div> 
 
           <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
             <p className="text-sm text-[#b8c7d9]">Total Loss</p>
