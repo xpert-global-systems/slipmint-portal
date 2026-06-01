@@ -1,5 +1,5 @@
 "use client";
-
+import BarChart from "../components/BarChart";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "../services/auth";
