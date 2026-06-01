@@ -4,16 +4,17 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const BarChart = () => {
+export default function BarChart() {
   const data = {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
-        label: 'Monthly Sales',
-        data: [30, 20, 50, 60, 70, 90],
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
+        label: 'Portfolio Growth',
+        data: [12, 19, 3, 5, 2, 30],
+        backgroundColor: 'rgba(16, 185, 129, 0.4)',
+        borderColor: 'rgba(16, 185, 129, 1)',
         borderWidth: 1,
+        borderRadius: 6,
       },
     ],
   };
@@ -21,12 +22,14 @@ const BarChart = () => {
   const options = {
     responsive: true,
     plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Monthly Sales Chart' },
+      legend: { display: false },
+      title: { display: false },
+    },
+    scales: {
+      y: { ticks: { color: '#b8c7d9' } },
+      x: { ticks: { color: '#b8c7d9' } },
     },
   };
 
   return <Bar data={data} options={options} />;
-};
-
-export default BarChart;
+}
