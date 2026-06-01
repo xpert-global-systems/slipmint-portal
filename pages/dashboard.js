@@ -4,9 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
-import TradeHistory from "@/components/TradeHistory";
-import BarChart from "@/components/BarChart";
-import { getUser } from "@/services/auth";
+import TradeHistory from "../components/TradeHistory";
+import BarChart from "../components/BarChart";
+import { getUser } from "../services/auth";
 
 import {
   LineChart,
