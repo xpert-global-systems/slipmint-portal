@@ -1,0 +1,1 @@
+// This file intentionally left empty\n// app/api directory is being deprecated in favor of pages/api\n// Route handlers should use pages/api/* instead\n
