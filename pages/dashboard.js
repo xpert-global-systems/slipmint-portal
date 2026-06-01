@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "../services/auth";
+import axios from "axios";
+
 import {
   LineChart,
   Line,
@@ -15,14 +17,15 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import axios from "axios";
 
 export default function Dashboard() {
   const router = useRouter();
+
+  // User + loading
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // AI Chat States
+  // AI Chat
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
@@ -30,6 +33,63 @@ export default function Dashboard() {
   // Crypto News
   const [news, setNews] = useState([]);
 
+  // Crypto Price Charts
+  const [btcData, setBtcData] = useState([]);
+  const [ethData, setEthData] = useState([]);
+
+  // Fetch crypto prices
+  const fetchCryptoPrices = async () => {
+    try {
+      const res = await axios.get(
+        "https://api.coingecko.com/api/v3/coins/markets",
+        {
+          params: {
+            vs_currency: "usd",
+            ids: "bitcoin,ethereum",
+          },
+        }
+      );
+
+      const btc = res.data.find((c) => c.id === "bitcoin");
+      const eth = res.data.find((c) => c.id === "ethereum");
+
+      setBtcData((prev) => [
+        ...prev.slice(-20),
+        { time: new Date().toLocaleTimeString(), price: btc.current_price },
+      ]);
+
+      setEthData((prev) => [
+        ...prev.slice(-20),
+        { time: new Date().toLocaleTimeString(), price: eth.current_price },
+      ]);
+    } catch (err) {
+      console.error("Crypto price fetch failed");
+    }
+  };
+
+  // AI Chat send
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { role: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoadingAI(true);
+
+    const res = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage.text }),
+    });
+
+    const data = await res.json();
+    const botMessage = { role: "bot", text: data.reply };
+
+    setMessages((prev) => [...prev, botMessage]);
+    setLoadingAI(false);
+  };
+
+  // Load user + news + crypto prices
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -53,36 +113,20 @@ export default function Dashboard() {
         router.push("/login");
       });
 
-    // Fetch Crypto News
+    // Fetch news
     axios.get("/api/news").then((res) => {
       setNews(res.data.data || []);
     });
+
+    // Fetch crypto prices + auto refresh
+    fetchCryptoPrices();
+    const interval = setInterval(fetchCryptoPrices, 60000);
+    return () => clearInterval(interval);
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.push("/login");
-  };
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = { role: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoadingAI(true);
-
-    const res = await fetch("/api/ai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMessage.text }),
-    });
-
-    const data = await res.json();
-    const botMessage = { role: "bot", text: data.reply };
-
-    setMessages((prev) => [...prev, botMessage]);
-    setLoadingAI(false);
   };
 
   if (loading) {
@@ -95,6 +139,7 @@ export default function Dashboard() {
     );
   }
 
+  // Dashboard metrics
   const baseBalance = user?.balance || 0;
   const totalInvested = user?.totalInvested || 1;
 
@@ -175,7 +220,7 @@ export default function Dashboard() {
           </div>
 
           <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
-            <p className="text-sm text-[#b8c7d9]">Total Profit</p>
+            <p className="text-sm text-[#b8c7d9]}>Total Profit</p>
             <h2 className="mt-2 text-3xl font-bold text-emerald-400">
               +${totalProfit.toLocaleString()}
             </h2>
@@ -193,6 +238,7 @@ export default function Dashboard() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Balance History */}
           <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
             <h3 className="text-lg font-semibold mb-4">Balance History</h3>
             <div className="h-[250px] w-full">
@@ -221,6 +267,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Weekly Performance */}
           <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
             <h3 className="text-lg font-semibold mb-4">Weekly Performance</h3>
             <div className="h-[250px] w-full">
@@ -241,6 +288,67 @@ export default function Dashboard() {
                   <Bar dataKey="profit" fill="#10b981" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="loss" fill="#ef4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Crypto Price Charts */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Bitcoin */}
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <h3 className="text-lg font-semibold mb-4">Bitcoin (BTC) Price</h3>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={btcData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <XAxis dataKey="time" stroke="#b8c7d9" />
+                  <YAxis stroke="#b8c7d9" />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#081120",
+                      border: "none",
+                      borderRadius: "10px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#f7931a"
+                    strokeWidth={2.5}
+                    dot={{ fill: "#f7931a" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Ethereum */}
+          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+            <h3 className="text-lg font-semibold mb-4">Ethereum (ETH) Price</h3>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={ethData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                  <XAxis dataKey="time" stroke="#b8c7d9" />
+                  <YAxis stroke="#b8c7d9" />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#081120",
+                      border: "none",
+                      borderRadius: "10px",
+                      color: "#fff",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#627eea"
+                    strokeWidth={2.5}
+                    dot={{ fill: "#627eea" }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
