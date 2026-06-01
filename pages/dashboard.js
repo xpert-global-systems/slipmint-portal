@@ -220,7 +220,7 @@ export default function Dashboard() {
           </div>
 
           <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
-            <p className="text-sm text-[#b8c7d9]}>Total Profit</p>
+            <p className="text-sm text-[#b8c7d9]">Total Profit</p>
             <h2 className="mt-2 text-3xl font-bold text-emerald-400">
               +${totalProfit.toLocaleString()}
             </h2>
