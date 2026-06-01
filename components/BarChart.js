@@ -19,7 +19,7 @@ const data = [
   { name: "Jun", value: 30 },
 ];
 
-export default function BarChartComponent() {
+export default function BarChart() {
   return (
     <ResponsiveContainer width="100%" height={250}>
       <BarChart data={data}>
