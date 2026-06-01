@@ -14,6 +14,7 @@ export default function ChatBubble() {
 
     const res = await fetch("/api/ai", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: input }),
     });
 
@@ -26,6 +27,7 @@ export default function ChatBubble() {
 
   return (
     <>
+      {/* Floating Chat Button */}
       <div
         onClick={() => setOpen(!open)}
         style={{
@@ -38,11 +40,13 @@ export default function ChatBubble() {
           borderRadius: "50%",
           cursor: "pointer",
           zIndex: 9999,
+          fontSize: "20px",
         }}
       >
         💬
       </div>
 
+      {/* Chat Window */}
       {open && (
         <div
           style={{
@@ -60,6 +64,7 @@ export default function ChatBubble() {
             zIndex: 9999,
           }}
         >
+          {/* Messages */}
           <div
             style={{
               flex: 1,
@@ -92,6 +97,7 @@ export default function ChatBubble() {
             ))}
           </div>
 
+          {/* Input */}
           <div style={{ padding: "10px", borderTop: "1px solid #ddd" }}>
             <input
               value={input}
