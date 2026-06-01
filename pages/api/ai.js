@@ -22,7 +22,9 @@ export default async function handler(req, res) {
     });
 
     const result = await model.generateContent(message);
-    res.status(200).json({ reply: result.text() });
+    const reply = result.response.text();
+
+    res.status(200).json({ reply });
 
   } catch (error) {
     res.status(500).json({ reply: "Something went wrong." });
