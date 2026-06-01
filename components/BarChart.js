@@ -1,35 +1,34 @@
-import React from 'react';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+"use client";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-export default function BarChart() {
-  const data = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Portfolio Growth',
-        data: [12, 19, 3, 5, 2, 30],
-        backgroundColor: 'rgba(16, 185, 129, 0.4)',
-        borderColor: 'rgba(16, 185, 129, 1)',
-        borderWidth: 1,
-        borderRadius: 6,
-      },
-    ],
-  };
+const data = [
+  { name: "Jan", value: 12 },
+  { name: "Feb", value: 19 },
+  { name: "Mar", value: 3 },
+  { name: "Apr", value: 5 },
+  { name: "May", value: 2 },
+  { name: "Jun", value: 30 },
+];
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      title: { display: false },
-    },
-    scales: {
-      y: { ticks: { color: '#b8c7d9' } },
-      x: { ticks: { color: '#b8c7d9' } },
-    },
-  };
-
-  return <Bar data={data} options={options} />;
+export default function BarChartComponent() {
+  return (
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="value" fill="#10b981" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
 }
