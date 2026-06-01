@@ -15,11 +15,20 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import axios from "axios";
 
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // AI Chat States
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  // Crypto News
+  const [news, setNews] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,11 +52,37 @@ export default function Dashboard() {
         localStorage.removeItem("token");
         router.push("/login");
       });
+
+    // Fetch Crypto News
+    axios.get("/api/news").then((res) => {
+      setNews(res.data.data || []);
+    });
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.push("/login");
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { role: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoadingAI(true);
+
+    const res = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage.text }),
+    });
+
+    const data = await res.json();
+    const botMessage = { role: "bot", text: data.reply };
+
+    setMessages((prev) => [...prev, botMessage]);
+    setLoadingAI(false);
   };
 
   if (loading) {
@@ -101,6 +136,7 @@ export default function Dashboard() {
 
       {/* Main */}
       <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8 space-y-6">
+
         {/* Welcome */}
         <div className="flex items-center justify-between rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
           <div>
@@ -210,60 +246,60 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 space-y-4">
-            <h3 className="text-lg font-semibold border-b border-white/10 pb-2">
-              Account Information
-            </h3>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#b8c7d9]">Email:</span>
-              <span className="text-white">{user?.email || "N/A"}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#b8c7d9]">Occupation:</span>
-              <span className="text-white">{user?.occupation || "N/A"}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-[#b8c7d9]">Phone:</span>
-              <span className="text-white">{user?.phone || "N/A"}</span>
-            </div>
-          </div>
+        {/* Crypto News */}
+        <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+          <h3 className="text-lg font-semibold mb-4">Crypto News</h3>
 
-          <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 space-y-4">
-            <h3 className="text-lg font-semibold border-b border-white/10 pb-2">
-              Wallet Info
-            </h3>
-
-            {user?.walletAddress ? (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#b8c7d9]">Status:</span>
-                  <span className="text-emerald-400 font-medium">
-                    ✓ Connected
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#b8c7d9]">Address:</span>
-                  <span className="font-mono bg-white/5 px-2 py-0.5 rounded text-xs text-slate-300">
-                    {user.walletAddress.slice(0, 6)}...
-                    {user.walletAddress.slice(-4)}
-                  </span>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-sm text-amber-400 font-medium mb-3">
-                  ⚠ No Wallet Connected
-                </span>
-                <button className="text-xs bg-emerald-500 hover:bg-emerald-600 font-bold py-2 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/10">
-                  Connect Wallet
-                </button>
+          <div className="space-y-4 max-h-[300px] overflow-y-auto">
+            {news.map((item, i) => (
+              <div key={i} className="p-4 bg-[#081120] rounded-xl border border-white/10">
+                <h4 className="font-semibold text-emerald-400">{item.title}</h4>
+                <p className="text-sm text-slate-300 mt-1">{item.text}</p>
               </div>
-            )}
+            ))}
           </div>
         </div>
+
+        {/* AI Assistant Chat */}
+        <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5">
+          <h3 className="text-lg font-semibold mb-4">AI Assistant</h3>
+
+          <div className="h-[250px] overflow-y-auto p-3 bg-[#081120] rounded-xl border border-white/10 mb-4">
+            {messages.map((msg, i) => (
+              <div key={i} className={`mb-3 ${msg.role === "user" ? "text-right" : "text-left"}`}>
+                <span
+                  className={`inline-block px-3 py-2 rounded-xl text-sm ${
+                    msg.role === "user"
+                      ? "bg-emerald-500 text-white"
+                      : "bg-white/10 text-white"
+                  }`}
+                >
+                  {msg.text}
+                </span>
+              </div>
+            ))}
+
+            {loadingAI && (
+              <p className="text-slate-400 text-sm animate-pulse">Thinking…</p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask the AI assistant…"
+              className="flex-1 px-4 py-2 rounded-xl bg-[#081120] border border-white/10 text-white"
+            />
+            <button
+              onClick={sendMessage}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+
       </main>
     </div>
   );
