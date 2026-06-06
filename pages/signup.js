@@ -1,7 +1,10 @@
 "use client";
 import { useState } from "react";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { firebaseApp } from "../lib/firebase"; // make sure this exists
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -20,7 +23,7 @@ export default function Signup() {
     setError("");
 
     try {
-      const auth = getAuth(firebaseApp);
+
 
       // 1. Create user in Firebase
       const cred = await createUserWithEmailAndPassword(auth, email, password);
