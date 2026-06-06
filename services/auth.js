@@ -1,77 +1,103 @@
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { auth } from “../lib/firebase”;
+import {
+signInWithEmailAndPassword,
+createUserWithEmailAndPassword,
+signOut,
+} from “firebase/auth”;
 
 export async function login(email, password) {
-  try {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+try {
+const cred = await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
 
-    const data = await res.json().catch(() => ({}));
+const token = await cred.user.getIdToken();
+return {
+  success: true,
+  token,
+  user: {
+    uid: cred.user.uid,
+    email: cred.user.email,
+  },
+};
 
-    if (!res.ok) {
-      return {
-        success: false,
-        message: data.message || "Login failed",
-      };
-    }
-
-    return data;
-  } catch (err) {
-    return {
-      success: false,
-      message: "Network error: " + err.message,
-    };
-  }
+} catch (err) {
+return {
+success: false,
+message: err.message,
+};
+}
 }
 
 export async function signup(fullName, email, password) {
-  try {
-    const res = await fetch(`${API}/api/auth/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, password }),
-    });
+try {
+const cred = await createUserWithEmailAndPassword(
+auth,
+email,
+password
+);
 
-    const data = await res.json().catch(() => ({}));
+const token = await cred.user.getIdToken();
+return {
+  success: true,
+  token,
+  user: {
+    uid: cred.user.uid,
+    email: cred.user.email,
+    fullName,
+  },
+};
 
-    if (!res.ok) {
-      return {
-        success: false,
-        message: data.message || "Signup failed",
-      };
-    }
-
-    return data;
-  } catch (err) {
-    return {
-      success: false,
-      message: "Network error: " + err.message,
-    };
-  }
+} catch (err) {
+return {
+success: false,
+message: err.message,
+};
+}
 }
 
-export async function getUser(token) {
-  try {
-    const res = await fetch(`${API}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+export async function logout() {
+try {
+await signOut(auth);
 
-    const data = await res.json().catch(() => ({}));
+return {
+  success: true,
+};
 
-    if (!res.ok) {
-      return {
-        success: false,
-        message: data.message || "Unauthorized",
-      };
-    }
+} catch (err) {
+return {
+success: false,
+message: err.message,
+};
+}
+}
 
-    return data;
-  } catch (err) {
-    return {
-      success: false,
-      message: "Network error: " + err.message,
-    };
-  }
+export async function getUser() {
+try {
+const user = auth.currentUser;
+
+if (!user) {
+  return {
+    success: false,
+    message: "Not authenticated",
+  };
+}
+const token = await user.getIdToken();
+return {
+  success: true,
+  token,
+  user: {
+    uid: user.uid,
+    email: user.email,
+  },
+};
+
+} catch (err) {
+return {
+success: false,
+message: err.message,
+};
+}
 }
