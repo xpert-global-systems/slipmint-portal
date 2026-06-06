@@ -27,10 +27,13 @@ export default function Signup() {
 
       // 1. Create user in Firebase
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = cred.user;
+const firebaseUser = cred.user;
 
-      // 2. Get Firebase ID token
-      const token = await firebaseUser.getIdToken();
+// Send verification email
+await sendEmailVerification(firebaseUser);
+
+// Get Firebase ID token
+const token = await firebaseUser.getIdToken(true);
 
       // 3. Send profile data to your backend (PostgreSQL)
       const res = await fetch(
