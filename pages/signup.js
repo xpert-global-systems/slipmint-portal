@@ -34,7 +34,7 @@ export default function Signup() {
 
       // 3. Send profile data to your backend (PostgreSQL)
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/user/create-profile`,
+        "/api/user/create-profile"
         {
           method: "POST",
           headers: {
