@@ -37,8 +37,8 @@ const token = await firebaseUser.getIdToken(true);
 
       // 3. Send profile data to your backend (PostgreSQL)
       const res = await fetch(
-        "/api/user/create-profile"
-        {
+  "/api/user/create-profile",
+  {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
