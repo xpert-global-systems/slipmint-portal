@@ -34,21 +34,21 @@ export default function Signup() {
       const token = await firebaseUser.getIdToken(true);
 
       // 3. Send profile data to your backend (PostgreSQL)
-      const res = await fetch("/api/user/create-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          fullName,
-          phone,
-          occupation,
-          dob: "", // add DOB field to your form later
-          ssn: "", // add SSN field to your form later
-          referral,
-        }),
-      });
+const res = await fetch("/api/user/create-profile", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    fullName,
+    phone,
+    occupation,
+    dob: "",
+    ssn: "",
+    referral,
+  }),
+});
 
       const data = await res.json();
 
