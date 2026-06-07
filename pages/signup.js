@@ -23,37 +23,32 @@ export default function Signup() {
     setError("");
 
     try {
-
-
       // 1. Create user in Firebase
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-const firebaseUser = cred.user;
+      const firebaseUser = cred.user;
 
-// Send verification email
-await sendEmailVerification(firebaseUser);
+      // Send verification email
+      await sendEmailVerification(firebaseUser);
 
-// Get Firebase ID token
-const token = await firebaseUser.getIdToken(true);
+      // Get Firebase ID token
+      const token = await firebaseUser.getIdToken(true);
 
       // 3. Send profile data to your backend (PostgreSQL)
-      const res = await fetch(
-  "/api/user/create-profile",
-  {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            fullName,
-            phone,
-            occupation,
-            dob: "", // add DOB field to your form later
-            ssn: "", // add SSN field to your form later
-            referral,
-          }),
-        }
-      );
+      const res = await fetch("/api/user/create-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullName,
+          phone,
+          occupation,
+          dob: "", // add DOB field to your form later
+          ssn: "", // add SSN field to your form later
+          referral,
+        }),
+      });
 
       const data = await res.json();
 
@@ -92,7 +87,7 @@ const token = await firebaseUser.getIdToken(true);
     <div style={styles.page}>
       <div style={styles.card}>
         <span style={styles.tag}>Get Started</span>
-        <h1 style={styles.title}>Create Account</h1>
+        <h1 style={styles title}>Create Account</h1>
         <p style={styles.subtitle}>
           Join SlipMint and start tracking your trading performance
         </p>
@@ -182,4 +177,62 @@ const token = await firebaseUser.getIdToken(true);
   );
 }
 
-const styles = { /* your styles unchanged */ };
+const styles = {
+  page: {
+    maxWidth: 680,
+    margin: "40px auto",
+    padding: 12,
+  },
+  card: {
+    padding: 18,
+    borderRadius: 8,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    background: "#fff",
+  },
+  tag: {
+    display: "inline-block",
+    background: "#f1f5f9",
+    padding: "4px 8px",
+    borderRadius: 6,
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  title: { margin: "6px 0 6px" },
+  subtitle: { color: "#555", marginBottom: 12 },
+  form: { marginTop: 12 },
+  label: { display: "block", marginTop: 12, fontSize: 14 },
+  input: {
+    display: "block",
+    width: "100%",
+    padding: 8,
+    marginTop: 6,
+    borderRadius: 6,
+    border: "1px solid #ddd",
+  },
+  button: {
+    marginTop: 14,
+    padding: "10px 16px",
+    background: "#0366d6",
+    color: "#fff",
+    border: "none",
+    borderRadius: 6,
+    cursor: "pointer",
+  },
+  footerText: { marginTop: 14, color: "#444" },
+  link: { color: "#0366d6" },
+  error: { color: "crimson", marginTop: 12 },
+  successBox: { textAlign: "center", padding: 20 },
+  successIcon: {
+    fontSize: 36,
+    background: "#e6ffed",
+    color: "#0a0",
+    width: 60,
+    height: 60,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "50%",
+  },
+  successTitle: { marginTop: 12 },
+  successMessage: { color: "#444" },
+};
