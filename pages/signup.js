@@ -87,7 +87,7 @@ const res = await fetch("/api/user/create-profile", {
     <div style={styles.page}>
       <div style={styles.card}>
         <span style={styles.tag}>Get Started</span>
-        <h1 style={styles title}>Create Account</h1>
+        <h1 style={styles.title}>Create Account</h1>
         <p style={styles.subtitle}>
           Join SlipMint and start tracking your trading performance
         </p>
