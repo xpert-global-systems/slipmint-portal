@@ -2,14 +2,13 @@
 
 export default async function handler(req, res) {
   // 1. Diagnostics baseline check
-  const diagnostics = {
-    test: process.env.NEXT_PUBLIC_TEST_VALUE || "Not found",
-    apiKey: process.env.FIREBASE_API_KEY ? "Loaded" : "Missing",
-    projectId: process.env.FIREBASE_PROJECT_ID ? "Loaded" : "Missing",
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN ? "Loaded" : "Missing",
-    scrapeLlmKey: process.env.SCRAPELLM_API_KEY ? "Loaded" : "Missing"
-  };
-
+const diagnostics = {
+  test: process.env.NEXT_PUBLIC_TEST_VALUE || "Not found",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "Loaded" : "Missing",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "Loaded" : "Missing",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "Loaded" : "Missing",
+  scrapeLlmKey: process.env.SCRAPELLM_API_KEY ? "Loaded" : "Missing"
+};
   // 2. If the key is missing, exit early with the diagnostics status map
   if (!process.env.SCRAPELLM_API_KEY) {
     return res.status(500).json({
