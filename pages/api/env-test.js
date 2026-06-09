@@ -5,17 +5,17 @@ console.log("PROJECT ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "Loaded
 console.log("SCRAPELLM:", process.env.SCRAPELLM_API_KEY ? "Loaded" : "Missing");
 
 const diagnostics = {
-test: process.env.NEXT_PUBLIC_TEST_VALUE || “Not found”,
-apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? “Loaded” : “Missing”,
-projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? “Loaded” : “Missing”,
-authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? “Loaded” : “Missing”,
-scrapeLlmKey: process.env.SCRAPELLM_API_KEY ? “Loaded” : “Missing”
+test: process.env.NEXT_PUBLIC_TEST_VALUE || "Not found",
+apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "Loaded" : "Missing",
+projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "Loaded" : "Missing",
+authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "Loaded" : "Missing",
+scrapeLlmKey: process.env.SCRAPELLM_API_KEY ? "Loaded" : "Missing"
 };
 
 const criticalKeys = [
-“SCRAPELLM_API_KEY”,
-“NEXT_PUBLIC_FIREBASE_API_KEY”,
-“NEXT_PUBLIC_FIREBASE_PROJECT_ID”
+"SCRAPELLM_API_KEY",
+"NEXT_PUBLIC_FIREBASE_API_KEY",
+"NEXT_PUBLIC_FIREBASE_PROJECT_ID"
 ];
 
 const missingKeys = criticalKeys.filter(key => !process.env[key]);
@@ -31,7 +31,7 @@ diagnostics
 const firebaseTestUrl =
 https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY};
 
-const testQuery = “Crypto market sentiment structural overview”;
+const testQuery = "Crypto market sentiment structural overview";
 
 const llmTestUrl =
 https://api.scrapellm.com/scrapers/chatgpt?prompt=${encodeURIComponent(testQuery)};
@@ -39,9 +39,9 @@ https://api.scrapellm.com/scrapers/chatgpt?prompt=${encodeURIComponent(testQuery
 try {
 const [firebaseResult, llmResult] = await Promise.allSettled([
 fetch(firebaseTestUrl, {
-method: “POST”,
+method: "POST",
 headers: {
-“Content-Type”: “application/json”
+"Content-Type": "application/json"
 },
 body: JSON.stringify({})
 }),
