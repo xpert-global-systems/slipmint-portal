@@ -1,14 +1,27 @@
 import admin from "firebase-admin";
 
-if (!admin.apps.length) {
+// Safe JSON parsing wrapper that handles hidden whitespace and newline injections
+const getServiceAccount = () => {
+  try {
+    const rawEnv = process.env.FIREBASE_SERVICE_ACCOUNT || "";
+    // Clean up escaped newlines or spaces that Vercel configuration layers might inject
+    const cleanEnv = rawEnv.replace(/\\n/g, '\n').trim();
+    return JSON.parse(cleanEnv);
+  } catch (parseError) {
+    console.error("FATAL: FIREBASE_SERVICE_ACCOUNT environment string is malformed JSON.", parseError.message);
+    return null;
+  }
+};
+
+const serviceAccount = getServiceAccount();
+
+if (!admin.apps.length && serviceAccount) {
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    ),
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 
-// Simple validation helper
+// Validation helper
 const validateInput = (data) => {
   const errors = [];
   const { fullName, phone, dob, ssn } = data;
@@ -16,13 +29,13 @@ const validateInput = (data) => {
   if (!fullName || fullName.trim().length < 2) {
     errors.push("Full name must be at least 2 characters");
   }
-  if (phone && !/^[\d\s\-\+\(\)]{10,20}$/.test(phone)) {
+  if (phone && phone.trim() !== "" && !/^[\d\s\-\+\(\)]{10,20}$/.test(phone.trim())) {
     errors.push("Invalid phone number format");
   }
-  if (dob && !/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+  if (dob && dob.trim() !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(dob.trim())) {
     errors.push("DOB must be YYYY-MM-DD format");
   }
-  if (ssn && !/^\d{3}-\d{2}-\d{4}$|^\d{9}$/.test(ssn)) {
+  if (ssn && ssn.trim() !== "" && !/^\d{3}-\d{2}-\d{4}$|^\d{9}$/.test(ssn.trim())) {
     errors.push("Invalid SSN format");
   }
   
@@ -31,9 +44,14 @@ const validateInput = (data) => {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
+    return res.status(405).json({ success: false, message: "Method not allowed" });
+  }
+
+  // Early exit if the SDK failed initialization due to string environment formatting
+  if (!admin.apps.length) {
+    return res.status(500).json({
       success: false,
-      message: "Method not allowed",
+      message: "Firebase Admin SDK failed to initialize. Check service account environment configuration format."
     });
   }
 
@@ -41,10 +59,7 @@ export default async function handler(req, res) {
     const token = req.headers.authorization?.split("Bearer ")[1];
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
+      return res.status(401).json({ success: false, message: "Authentication required" });
     }
 
     const decoded = await admin.auth().verifyIdToken(token);
@@ -59,30 +74,21 @@ export default async function handler(req, res) {
       });
     }
 
-    const {
-      fullName,
-      phone,
-      occupation,
-      dob,
-      ssn, // ⚠️ See security note below
-      referral,
-    } = req.body;
+    const { fullName, phone, occupation, dob, ssn, referral } = req.body;
 
-    // Sanitize inputs
+    // Sanitize values cleanly (convert empty client strings into clean database NULLs)
     const sanitizedData = {
       uid: decoded.uid,
       email: decoded.email,
       fullName: fullName.trim(),
-      phone: phone?.trim() || null,
-      occupation: occupation?.trim() || null,
-      dob: dob || null,
-      // ⚠️ SECURITY: Consider encrypting SSN or storing in a separate secure collection
-      ssn: ssn ? ssn.replace(/\D/g, "") : null, // Store digits only
-      referral: referral?.trim() || null,
+      phone: phone && phone.trim() !== "" ? phone.trim() : null,
+      occupation: occupation && occupation.trim() !== "" ? occupation.trim() : null,
+      dob: dob && dob.trim() !== "" ? dob.trim() : null,
+      ssn: ssn && ssn.trim() !== "" ? ssn.replace(/\D/g, "") : null, 
+      referral: referral && referral.trim() !== "" ? referral.trim() : null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // Use createdAt only on first write (merge preserves existing)
     const docRef = admin.firestore().collection("users").doc(decoded.uid);
     const doc = await docRef.get();
     
@@ -99,18 +105,12 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("Profile error:", error);
+    console.error("Profile handler runtime exception:", error);
     
-    // Don't leak internal error details to client
     const isAuthError = error.code?.startsWith("auth/");
-    const statusCode = isAuthError ? 401 : 500;
-    const message = isAuthError 
-      ? "Invalid or expired token" 
-      : "Internal server error";
-
-    return res.status(statusCode).json({
+    return res.status(isAuthError ? 401 : 500).json({
       success: false,
-      message,
+      message: isAuthError ? "Invalid or expired token" : `Server Error: ${error.message}`,
     });
   }
 }
