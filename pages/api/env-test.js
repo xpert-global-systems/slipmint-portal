@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
-console.log(“API KEY:”, process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? “Loaded” : “Missing”);
-console.log(“AUTH DOMAIN:”, process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? “Loaded” : “Missing”);
-console.log(“PROJECT ID:”, process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? “Loaded” : “Missing”);
-console.log(“SCRAPELLM:”, process.env.SCRAPELLM_API_KEY ? “Loaded” : “Missing”);
+console.log("API KEY:", process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "Loaded" : "Missing");
+console.log("AUTH DOMAIN:", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "Loaded" : "Missing");
+console.log("PROJECT ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "Loaded" : "Missing");
+console.log("SCRAPELLM:", process.env.SCRAPELLM_API_KEY ? "Loaded" : "Missing");
 
 const diagnostics = {
 test: process.env.NEXT_PUBLIC_TEST_VALUE || “Not found”,
