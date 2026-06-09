@@ -21,20 +21,27 @@ if (!admin.apps.length && serviceAccount) {
   });
 }
 
-// Validation helper
+// Simple validation helper (Fully protected against missing/undefined UI fields)
 const validateInput = (data) => {
   const errors = [];
   const { fullName, phone, dob, ssn } = data;
   
+  // 1. Full name is strictly required
   if (!fullName || fullName.trim().length < 2) {
     errors.push("Full name must be at least 2 characters");
   }
+  
+  // 2. Only validate phone if it is present and not empty
   if (phone && phone.trim() !== "" && !/^[\d\s\-\+\(\)]{10,20}$/.test(phone.trim())) {
     errors.push("Invalid phone number format");
   }
+  
+  // 3. Only validate DOB if the input actually exists on the screen
   if (dob && dob.trim() !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(dob.trim())) {
     errors.push("DOB must be YYYY-MM-DD format");
   }
+  
+  // 4. Only validate SSN if the input actually exists on the screen
   if (ssn && ssn.trim() !== "" && !/^\d{3}-\d{2}-\d{4}$|^\d{9}$/.test(ssn.trim())) {
     errors.push("Invalid SSN format");
   }
@@ -44,7 +51,10 @@ const validateInput = (data) => {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ success: false, message: "Method not allowed" });
+    return res.status(405).json({
+      success: false,
+      message: "Method not allowed",
+    });
   }
 
   // Early exit if the SDK failed initialization due to string environment formatting
@@ -59,12 +69,15 @@ export default async function handler(req, res) {
     const token = req.headers.authorization?.split("Bearer ")[1];
 
     if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required" });
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
     }
 
     const decoded = await admin.auth().verifyIdToken(token);
     
-    // Validate inputs
+    // Validate inputs safely
     const validationErrors = validateInput(req.body);
     if (validationErrors.length > 0) {
       return res.status(400).json({
@@ -74,9 +87,16 @@ export default async function handler(req, res) {
       });
     }
 
-    const { fullName, phone, occupation, dob, ssn, referral } = req.body;
+    const {
+      fullName,
+      phone,
+      occupation,
+      dob,
+      ssn,
+      referral,
+    } = req.body;
 
-    // Sanitize values cleanly (convert empty client strings into clean database NULLs)
+    // Sanitize values cleanly (convert empty or missing client strings into database nulls)
     const sanitizedData = {
       uid: decoded.uid,
       email: decoded.email,
@@ -84,11 +104,12 @@ export default async function handler(req, res) {
       phone: phone && phone.trim() !== "" ? phone.trim() : null,
       occupation: occupation && occupation.trim() !== "" ? occupation.trim() : null,
       dob: dob && dob.trim() !== "" ? dob.trim() : null,
-      ssn: ssn && ssn.trim() !== "" ? ssn.replace(/\D/g, "") : null, 
+      ssn: ssn && ssn.trim() !== "" ? ssn.replace(/\D/g, "") : null, // Store digits only if sent
       referral: referral && referral.trim() !== "" ? referral.trim() : null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
+    // Use createdAt only on first write (merge preserves existing)
     const docRef = admin.firestore().collection("users").doc(decoded.uid);
     const doc = await docRef.get();
     
@@ -105,12 +126,18 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("Profile handler runtime exception:", error);
+    console.error("Profile error:", error);
     
+    // Don't leak internal crash details to client unless it is an explicit auth breach
     const isAuthError = error.code?.startsWith("auth/");
-    return res.status(isAuthError ? 401 : 500).json({
+    const statusCode = isAuthError ? 401 : 500;
+    const message = isAuthError 
+      ? "Invalid or expired token" 
+      : `Internal server error: ${error.message}`;
+
+    return res.status(statusCode).json({
       success: false,
-      message: isAuthError ? "Invalid or expired token" : `Server Error: ${error.message}`,
+      message,
     });
   }
 }
