@@ -1,10 +1,6 @@
 "use client";
 import { useState } from "react";
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-} from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { signup } from "../services/auth"; // Correct: Centralized auth service
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -23,32 +19,36 @@ export default function Signup() {
     setError("");
 
     try {
-      // 1. Create user in Firebase
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = cred.user;
+      // 1. Sanitize input strings to destroy invisible whitespace/newlines
+      const cleanEmail = email.trim();
+      const cleanPassword = password.trim();
 
-      // Send verification email
-      await sendEmailVerification(firebaseUser);
+      // 2. Create user and dispatch verification link via centralized service
+      const result = await signup(cleanEmail, cleanPassword);
 
-      // Get Firebase ID token
-      const token = await firebaseUser.getIdToken(true);
+      if (!result.success) {
+        throw new Error(result.message || "Signup failed");
+      }
+
+      // Extract the fresh JWT token from successful registration
+      const token = result.token;
 
       // 3. Send profile data to your backend (PostgreSQL)
-const res = await fetch("/api/user/create-profile", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-  body: JSON.stringify({
-    fullName,
-    phone,
-    occupation,
-    dob: "",
-    ssn: "",
-    referral,
-  }),
-});
+      const res = await fetch("/api/user/create-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          occupation: occupation.trim(),
+          dob: "",
+          ssn: "",
+          referral: referral.trim(),
+        }),
+      });
 
       const data = await res.json();
 
@@ -63,7 +63,16 @@ const res = await fetch("/api/user/create-profile", {
       }, 1500);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Signup failed");
+      
+      // Map cryptic Firebase runtime strings to clean text notifications
+      let friendlyMessage = err.message || "Signup failed";
+      if (err.message.includes("auth/email-already-in-use")) {
+        friendlyMessage = "An account with this email address already exists.";
+      } else if (err.message.includes("auth/weak-password")) {
+        friendlyMessage = "Password must be at least 6 characters long.";
+      }
+      
+      setError(friendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -178,61 +187,20 @@ const res = await fetch("/api/user/create-profile", {
 }
 
 const styles = {
-  page: {
-    maxWidth: 680,
-    margin: "40px auto",
-    padding: 12,
-  },
-  card: {
-    padding: 18,
-    borderRadius: 8,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-    background: "#fff",
-  },
-  tag: {
-    display: "inline-block",
-    background: "#f1f5f9",
-    padding: "4px 8px",
-    borderRadius: 6,
-    fontSize: 12,
-    marginBottom: 8,
-  },
+  page: { maxWidth: 680, margin: "40px auto", padding: 12 },
+  card: { padding: 18, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", background: "#fff" },
+  tag: { display: "inline-block", background: "#f1f5f9", padding: "4px 8px", borderRadius: 6, fontSize: 12, marginBottom: 8 },
   title: { margin: "6px 0 6px" },
   subtitle: { color: "#555", marginBottom: 12 },
   form: { marginTop: 12 },
   label: { display: "block", marginTop: 12, fontSize: 14 },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: 8,
-    marginTop: 6,
-    borderRadius: 6,
-    border: "1px solid #ddd",
-  },
-  button: {
-    marginTop: 14,
-    padding: "10px 16px",
-    background: "#0366d6",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    cursor: "pointer",
-  },
+  input: { display: "block", width: "100%", padding: 8, marginTop: 6, borderRadius: 6, border: "1px solid #ddd" },
+  button: { marginTop: 14, padding: "10px 16px", background: "#0366d6", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" },
   footerText: { marginTop: 14, color: "#444" },
   link: { color: "#0366d6" },
   error: { color: "crimson", marginTop: 12 },
   successBox: { textAlign: "center", padding: 20 },
-  successIcon: {
-    fontSize: 36,
-    background: "#e6ffed",
-    color: "#0a0",
-    width: 60,
-    height: 60,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "50%",
-  },
+  successIcon: { fontSize: 36, background: "#e6ffed", color: "#0a0", width: 60, height: 60, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" },
   successTitle: { marginTop: 12 },
-  successMessage: { color: "#444" },
+  successMessage: { color: "#444" }
 };
