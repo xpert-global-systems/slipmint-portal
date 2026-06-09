@@ -22,14 +22,14 @@ const diagnostics = {
     // 3. Run a quick, automated network check against the ScrapeLLM engine
     const testQuery = "Crypto market sentiment structural overview";
     const response = await fetch(
-      `https://scrapellm.com{encodeURIComponent(testQuery)}`,
-      {
-        method: 'GET',
-        headers: {
-          "X-API-Key": process.env.SCRAPELLM_API_KEY,
-        },
-      }
-    );
+  `https://api.scrapellm.com/scrapers/chatgpt?prompt=${encodeURIComponent(testQuery)}`,
+  {
+    method: "GET",
+    headers: {
+      "X-API-Key": process.env.SCRAPELLM_API_KEY,
+    },
+  }
+);
 
     if (!response.ok) {
       return res.status(response.status).json({
