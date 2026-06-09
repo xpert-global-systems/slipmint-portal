@@ -66,12 +66,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token = req.headers.authorization?.split("Bearer ")[1];
+    const authHeader = req.headers.authorization || "";
+    
+    // Explicit format evaluation to block malformed network scanner requests
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required: Missing Bearer prefix",
+      });
+    }
+
+    const token = authHeader.split("Bearer ")[1]?.trim();
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Authentication required",
+        message: "Authentication required: Token parameter is empty",
       });
     }
 
@@ -128,7 +138,6 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Profile error:", error);
     
-    // Don't leak internal crash details to client unless it is an explicit auth breach
     const isAuthError = error.code?.startsWith("auth/");
     const statusCode = isAuthError ? 401 : 500;
     const message = isAuthError 
