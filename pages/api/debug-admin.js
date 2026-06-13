@@ -1,5 +1,4 @@
-import * as lib from "../../lib/firebaseAdmin";
-import * as src from "../../src/lib/firebaseAdmin";
+import { getFirebaseApp } from "../../src/lib/firebaseAdmin";
 
 export default function handler(req, res) {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -13,25 +12,30 @@ export default function handler(req, res) {
     parseError = e.message;
   }
 
+  let firebaseStatus = "NOT_INITIALIZED";
+  let appsCount = 0;
+  let projectId = null;
+
+  try {
+    const app = getFirebaseApp();
+    appsCount = app ? 1 : 0;
+    projectId = app?.options?.projectId || null;
+    firebaseStatus = "INITIALIZED";
+  } catch (e) {
+    firebaseStatus = "ERROR: " + e.message;
+  }
+
   res.status(200).json({
-    // FILE DETECTION
-    lib_source: lib.FIREBASE_SOURCE || "NOT_FOUND",
-    src_source: src.FIREBASE_SOURCE || "NOT_FOUND",
+    firebase_status: firebaseStatus,
+    apps: appsCount,
+    projectId,
 
-    lib_loaded: !!lib,
-    src_loaded: !!src,
+    env_exists: !!raw,
+    env_length: raw?.length || 0,
 
-    // ENV CHECK
-    exists: !!raw,
-    length: raw?.length || 0,
-    preview_start: raw?.slice(0, 80) || null,
-    preview_end: raw?.slice(-80) || null,
-
-    // JSON VALIDATION
     isValidJson: !parseError && !!parsed,
     jsonError: parseError,
 
-    // FIREBASE DATA
     project_id: parsed?.project_id || null,
     client_email: parsed?.client_email || null,
     has_private_key: !!parsed?.private_key,
