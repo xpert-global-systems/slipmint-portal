@@ -1,19 +1,28 @@
-import admin from "../../lib/firebaseAdmin";
+export default function handler(req, res) {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-export default async function handler(req, res) {
+  let parsed = null;
+  let parseError = null;
+
   try {
-    return res.status(200).json({
-      success: true,
-      apps: admin.apps.length,
-      projectId: admin.apps.length
-        ? admin.app().options.projectId
-        : "NOT_INITIALIZED",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-      stack: error.stack,
-    });
+    if (raw) parsed = JSON.parse(raw);
+  } catch (e) {
+    parseError = e.message;
   }
+
+  res.status(200).json({
+    exists: !!raw,
+    length: raw?.length || 0,
+    preview_start: raw?.slice(0, 80) || null,
+    preview_end: raw?.slice(-80) || null,
+
+    // JSON validation
+    isValidJson: !parseError && !!parsed,
+    jsonError: parseError,
+
+    // Firebase fields check
+    project_id: parsed?.project_id || null,
+    client_email: parsed?.client_email || null,
+    has_private_key: !!parsed?.private_key,
+  });
 }
