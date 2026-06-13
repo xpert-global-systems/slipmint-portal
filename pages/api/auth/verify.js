@@ -12,7 +12,7 @@ privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
 
 export default async function handler(req, res) {
 try {
-const token = req.headers.authorization?.split(“Bearer “)[1];
+const token = req.headers.authorization?.split("Bearer ")[1];
 
 if (!token) {
   return res.status(401).json({
