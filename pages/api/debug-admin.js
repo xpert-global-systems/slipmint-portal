@@ -1,15 +1,17 @@
-export default async function handler(req, res) {
-  try {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+import admin from “../../lib/firebaseAdmin”;
 
-    return res.status(200).json({
-      exists: !!raw,
-      length: raw?.length || 0,
-      startsWith: raw?.substring(0, 30) || null
-    });
-  } catch (err) {
-    return res.status(500).json({
-      error: err.message
-    });
-  }
+export default async function handler(req, res) {
+try {
+return res.status(200).json({
+success: true,
+projectId: admin.app().options.projectId || null,
+appInitialized: admin.apps.length > 0
+});
+} catch (error) {
+return res.status(500).json({
+success: false,
+error: error.message,
+stack: error.stack
+});
+}
 }
