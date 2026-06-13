@@ -1,4 +1,4 @@
-import admin from “../../../lib/firebaseAdmin”;
+import admin from "../../../lib/firebaseAdmin”;
 
 // Simple validation helper
 const validateInput = (data) => {
@@ -6,46 +6,46 @@ const errors = [];
 const { fullName, phone, dob, ssn } = data;
 
 if (!fullName || fullName.trim().length < 2) {
-errors.push(“Full name must be at least 2 characters”);
+errors.push("Full name must be at least 2 characters”);
 }
 
 if (
 phone &&
-phone.trim() !== “” &&
+phone.trim() !== "” &&
 !/^[\d\s-+()]{10,20}$/.test(phone.trim())
 ) {
-errors.push(“Invalid phone number format”);
+errors.push("Invalid phone number format”);
 }
 
 if (
 dob &&
-dob.trim() !== “” &&
+dob.trim() !== "” &&
 !/^\d{4}-\d{2}-\d{2}$/.test(dob.trim())
 ) {
-errors.push(“DOB must be YYYY-MM-DD format”);
+errors.push("DOB must be YYYY-MM-DD format”);
 }
 
 if (
 ssn &&
-ssn.trim() !== “” &&
+ssn.trim() !== "” &&
 !/^\d{3}-\d{2}-\d{4}$|^\d{9}$/.test(ssn.trim())
 ) {
-errors.push(“Invalid SSN format”);
+errors.push("Invalid SSN format”);
 }
 
 return errors;
 };
 
 export default async function handler(req, res) {
-if (req.method !== “POST”) {
+if (req.method !== "POST”) {
 return res.status(405).json({
 success: false,
-message: “Method not allowed”,
+message: "Method not allowed”,
 });
 }
 
 try {
-const authHeader = req.headers.authorization || “”;
+const authHeader = req.headers.authorization || "”;
 
 if (!authHeader.startsWith("Bearer ")) {
   return res.status(401).json({
@@ -104,7 +104,7 @@ return res.status(200).json({
 });
 
 } catch (error) {
-console.error(“Profile error:”, error);
+console.error("Profile error:”, error);
 
 const isAuthError = error.code?.startsWith("auth/");
 return res.status(isAuthError ? 401 : 500).json({
