@@ -1,23 +1,14 @@
 export default function handler(req, res) {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+res.status(200).json({
+FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
+FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
 
-  let parsed = null;
-  let error = null;
+projectId: process.env.FIREBASE_PROJECT_ID || null,
+clientEmailPresent: !!process.env.FIREBASE_CLIENT_EMAIL,
+privateKeyPresent: !!process.env.FIREBASE_PRIVATE_KEY,
+privateKeyLength:
+  process.env.FIREBASE_PRIVATE_KEY?.length || 0,
 
-  try {
-    if (raw) parsed = JSON.parse(raw);
-  } catch (e) {
-    error = e.message;
-  }
-
-  res.status(200).json({
-    exists: !!raw,
-    length: raw?.length || 0,
-    preview_start: raw?.slice(0, 80) || null,
-    preview_end: raw?.slice(-80) || null,
-    isValidJson: !error && !!parsed,
-    jsonError: error,
-    project_id: parsed?.project_id || null,
-    client_email: parsed?.client_email || null,
-  });
+});
 }
