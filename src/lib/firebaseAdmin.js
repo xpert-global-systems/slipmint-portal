@@ -9,14 +9,16 @@ let app = null;
  * Initialize Firebase Admin safely (Vercel + Next.js compatible)
  */
 export function getFirebaseApp() {
-  // Prevent re-initialization in hot reload / serverless
+  // Return cached instance
   if (app) return app;
 
+  // Prevent duplicate initialization
   if (admin.apps.length > 0) {
     app = admin.app();
     return app;
   }
 
+  // Validate env
   if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
     throw new Error("Missing FIREBASE_SERVICE_ACCOUNT env variable");
   }
@@ -26,7 +28,7 @@ export function getFirebaseApp() {
       process.env.FIREBASE_SERVICE_ACCOUNT
     );
 
-    // Fix private key formatting for Firebase
+    // Fix private key formatting
     if (serviceAccount.private_key) {
       serviceAccount.private_key =
         serviceAccount.private_key.replace(/\\n/g, "\n");
@@ -47,7 +49,6 @@ export function getFirebaseApp() {
 // -----------------------------
 // SERVICES (SAFE EXPORTS)
 // -----------------------------
-
 export function getAuth() {
   return getFirebaseApp().auth();
 }
@@ -56,5 +57,7 @@ export function getDb() {
   return getFirebaseApp().firestore();
 }
 
-// Optional direct access
+// -----------------------------
+// OPTIONAL DEFAULT EXPORT (IMPORTANT)
+// -----------------------------
 export default getFirebaseApp;
