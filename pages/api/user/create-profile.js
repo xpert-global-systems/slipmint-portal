@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../../lib/firebaseAdmin";
 
 // Safe JSON parsing wrapper that handles hidden whitespace and newline injections
 const getServiceAccount = () => {
