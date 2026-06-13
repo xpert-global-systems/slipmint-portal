@@ -1,33 +1,60 @@
 import admin from "firebase-admin";
 
-function getApp() {
+// -----------------------------
+// SINGLETON INSTANCE
+// -----------------------------
+let app = null;
+
+/**
+ * Initialize Firebase Admin safely (Vercel + Next.js compatible)
+ */
+export function getFirebaseApp() {
+  // Prevent re-initialization in hot reload / serverless
+  if (app) return app;
+
   if (admin.apps.length > 0) {
-    return admin.app();
+    app = admin.app();
+    return app;
   }
 
   if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-    throw new Error("Missing FIREBASE_SERVICE_ACCOUNT");
+    throw new Error("Missing FIREBASE_SERVICE_ACCOUNT env variable");
   }
 
-  const serviceAccount = JSON.parse(
-    process.env.FIREBASE_SERVICE_ACCOUNT
-  );
+  try {
+    const serviceAccount = JSON.parse(
+      process.env.FIREBASE_SERVICE_ACCOUNT
+    );
 
-  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+    // Fix private key formatting for Firebase
+    if (serviceAccount.private_key) {
+      serviceAccount.private_key =
+        serviceAccount.private_key.replace(/\\n/g, "\n");
+    }
 
-  return admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+    // Initialize Firebase Admin
+    app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+
+    return app;
+  } catch (error) {
+    console.error("Firebase Admin initialization failed:", error);
+    throw error;
+  }
 }
 
-// ❗ DO NOT initialize at module load
+// -----------------------------
+// SERVICES (SAFE EXPORTS)
+// -----------------------------
 
 export function getAuth() {
-  return getApp().auth();
+  return getFirebaseApp().auth();
 }
 
 export function getDb() {
-  return getApp().firestore();
+  return getFirebaseApp().firestore();
 }
 
-export default getApp;
+// Optional direct access
+export default getFirebaseApp;
