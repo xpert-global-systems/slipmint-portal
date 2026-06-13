@@ -1,4 +1,5 @@
-import admin from "../../../lib/firebaseAdmin";
+import { getAuth, getDb } from "../../../src/lib/firebaseAdmin";
+import admin from "firebase-admin";
 
 // Simple validation helper
 const validateInput = (data) => {
@@ -51,7 +52,7 @@ export default async function handler(req, res) {
     }
 
     // Verify token with Firebase Admin
-    const decoded = await admin.auth().verifyIdToken(token);
+const decoded = await getAuth().verifyIdToken(token);
 
     // Run input validation
     const validationErrors = validateInput(req.body);
@@ -78,7 +79,7 @@ export default async function handler(req, res) {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = admin.firestore().collection("users").doc(decoded.uid);
+    const docRef = getDb().collection("users").doc(decoded.uid);
     const doc = await docRef.get();
 
     // Only set createdAt if the document doesn't exist yet
