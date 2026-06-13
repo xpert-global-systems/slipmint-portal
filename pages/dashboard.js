@@ -87,7 +87,7 @@ function FeatureGate({ tier, requiredTier, children, fallback }) {
   return fallback || (
     <div className="rounded-2xl bg-[#0f1b2d] p-6 border border-white/5 opacity-60">
       <div className="text-center py-8">
-        <p className="text-lg font-semibold text-white mb-2">ð Founder Vault Exclusive</p>
+        <p className="text-lg font-semibold text-white mb-2">🔒 Founder Vault Exclusive</p>
         <p className="text-sm text-[#b8c7d9] mb-4">Upgrade to access advanced analytics and governance features.</p>
         <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold text-sm transition-all">
           Upgrade to Founder
@@ -155,7 +155,7 @@ function WalletConnect({ onConnect, connected, address }) {
     return (
       <div className="flex items-center gap-3">
         <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
-          â Base
+          ● Base
         </span>
         <span className="text-sm text-[#b8c7d9] font-mono">
           {address.slice(0, 6)}...{address.slice(-4)}
@@ -551,7 +551,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold tracking-wider text-emerald-400">SlipMint</h1>
             <span className="hidden sm:inline text-xs bg-white/5 px-2 py-1 rounded-full text-[#b8c7d9]">
-              {tier === "founder" ? "ð Founder Vault" : "Free Tier"}
+              {tier === "founder" ? "🏆 Founder Vault" : "Free Tier"}
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -581,7 +581,7 @@ export default function Dashboard() {
             </h1>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-2xl border border-white/10">
-            ð¤
+            👤
           </div>
         </div>
 
