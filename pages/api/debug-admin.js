@@ -1,5 +1,5 @@
-import { FIREBASE_SOURCE } from "../../lib/firebaseAdmin"; 
-// If this import fails, it means src/lib is being used instead
+import * as lib from "../../lib/firebaseAdmin";
+import * as src from "../../src/lib/firebaseAdmin";
 
 export default function handler(req, res) {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -14,8 +14,12 @@ export default function handler(req, res) {
   }
 
   res.status(200).json({
-    // 🔥 FILE DETECTION
-    firebase_file_source: FIREBASE_SOURCE || "NOT_FOUND",
+    // FILE DETECTION
+    lib_source: lib.FIREBASE_SOURCE || "NOT_FOUND",
+    src_source: src.FIREBASE_SOURCE || "NOT_FOUND",
+
+    lib_loaded: !!lib,
+    src_loaded: !!src,
 
     // ENV CHECK
     exists: !!raw,
