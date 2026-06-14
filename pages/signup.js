@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { signup } from "../services/auth"; // Correct: Centralized auth service
+import { signup } from "../services/auth";
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
@@ -19,21 +19,16 @@ export default function Signup() {
     setError("");
 
     try {
-      // 1. Sanitize input strings to destroy invisible whitespace/newlines
-      const cleanEmail = email.trim();
-      const cleanPassword = password.trim();
-
-      // 2. Create user and dispatch verification link via centralized service
-      const result = await signup(cleanEmail, cleanPassword);
+      const result = await signup(email.trim(), password.trim());
 
       if (!result.success) {
         throw new Error(result.message || "Signup failed");
       }
 
-      // Extract the fresh JWT token from successful registration
       const token = result.token;
 
-      // 3. Send profile data to your backend (PostgreSQL)
+      console.log("🚀 sending profile request...");
+
       const res = await fetch("/api/user/create-profile", {
         method: "POST",
         headers: {
@@ -50,9 +45,19 @@ export default function Signup() {
         }),
       });
 
-      const data = await res.json();
+      console.log("📡 status:", res.status);
 
-      if (!data.success) {
+      const text = await res.text();
+      console.log("📦 raw:", text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error("Server returned invalid JSON");
+      }
+
+      if (!res.ok || !data.success) {
         throw new Error(data.message || "Profile save failed");
       }
 
@@ -61,146 +66,32 @@ export default function Signup() {
       setTimeout(() => {
         window.location.href = "/onboarding";
       }, 1500);
+
     } catch (err) {
-      console.error(err);
-      
-      // Map cryptic Firebase runtime strings to clean text notifications
-      let friendlyMessage = err.message || "Signup failed";
-      if (err.message.includes("auth/email-already-in-use")) {
-        friendlyMessage = "An account with this email address already exists.";
-      } else if (err.message.includes("auth/weak-password")) {
-        friendlyMessage = "Password must be at least 6 characters long.";
-      }
-      
-      setError(friendlyMessage);
+      setError(err.message || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
 
   if (success) {
-    return (
-      <div style={styles.page}>
-        <div style={styles.card}>
-          <div style={styles.successBox}>
-            <p style={styles.successIcon}>✓</p>
-            <h1 style={styles.successTitle}>Account Created!</h1>
-            <p style={styles.successMessage}>Redirecting to setup...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <h2>Account Created...</h2>;
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <span style={styles.tag}>Get Started</span>
-        <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.subtitle}>
-          Join SlipMint and start tracking your trading performance
-        </p>
+    <form onSubmit={handleSignup}>
+      <input placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+      <input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <input placeholder="Occupation" value={occupation} onChange={(e) => setOccupation(e.target.value)} />
+      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <input placeholder="Referral" value={referral} onChange={(e) => setReferral(e.target.value)} />
 
-        <form onSubmit={handleSignup} style={styles.form}>
-          <label style={styles.label}>Full Name</label>
-          <input
-            type="text"
-            placeholder="Your name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            style={styles.input}
-            required
-          />
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-          <label style={styles.label}>Phone Number</label>
-          <input
-            type="tel"
-            placeholder="Phone number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            style={styles.input}
-            required
-          />
-
-          <label style={styles.label}>Occupation</label>
-          <input
-            type="text"
-            placeholder="Your occupation"
-            value={occupation}
-            onChange={(e) => setOccupation(e.target.value)}
-            style={styles.input}
-            required
-          />
-
-          <label style={styles.label}>Email</label>
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-            required
-          />
-
-          <label style={styles.label}>Password</label>
-          <input
-            type="password"
-            placeholder="At least 6 characters"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            required
-          />
-
-          <label style={styles.label}>Referral Code (Optional)</label>
-          <input
-            type="text"
-            placeholder="If you have one"
-            value={referral}
-            onChange={(e) => setReferral(e.target.value)}
-            style={styles.input}
-          />
-
-          {error && <p style={styles.error}>{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              ...styles.button,
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? "Creating account..." : "Sign Up"}
-          </button>
-        </form>
-
-        <p style={styles.footerText}>
-          Already have an account?{" "}
-          <a href="/login" style={styles.link}>
-            Login here
-          </a>
-        </p>
-      </div>
-    </div>
+      <button disabled={loading}>
+        {loading ? "Creating..." : "Sign Up"}
+      </button>
+    </form>
   );
 }
-
-const styles = {
-  page: { maxWidth: 680, margin: "40px auto", padding: 12 },
-  card: { padding: 18, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.08)", background: "#fff" },
-  tag: { display: "inline-block", background: "#f1f5f9", padding: "4px 8px", borderRadius: 6, fontSize: 12, marginBottom: 8 },
-  title: { margin: "6px 0 6px" },
-  subtitle: { color: "#555", marginBottom: 12 },
-  form: { marginTop: 12 },
-  label: { display: "block", marginTop: 12, fontSize: 14 },
-  input: { display: "block", width: "100%", padding: 8, marginTop: 6, borderRadius: 6, border: "1px solid #ddd" },
-  button: { marginTop: 14, padding: "10px 16px", background: "#0366d6", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" },
-  footerText: { marginTop: 14, color: "#444" },
-  link: { color: "#0366d6" },
-  error: { color: "crimson", marginTop: 12 },
-  successBox: { textAlign: "center", padding: 20 },
-  successIcon: { fontSize: 36, background: "#e6ffed", color: "#0a0", width: 60, height: 60, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "50%" },
-  successTitle: { marginTop: 12 },
-  successMessage: { color: "#444" }
-};
