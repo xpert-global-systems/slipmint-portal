@@ -151,7 +151,7 @@ const styles = {
     borderRadius: "6px",
     fontSize: "12px",
     fontWeight: 700,
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase",
     letterSpacing: "0.8px",
     marginBottom: "20px",
   },
@@ -233,7 +233,7 @@ const styles = {
     color: "#22c55e",
     fontSize: "11px",
     fontWeight: "700",
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase",
     letterSpacing: "0.5px",
   },
   resultText: {
@@ -276,7 +276,7 @@ const styles = {
   cardType: {
     fontSize: "11px",
     color: "#64748b",
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase",
     letterSpacing: "0.5px",
     background: "rgba(255,255,255,0.03)",
     padding: "3px 8px",
