@@ -19,6 +19,7 @@ export default function Navbar() {
           <Link href="/performance" style={styles.navLink}>Performance</Link>
           <Link href="/vault" style={styles.navLink}>Founder Vault</Link>
           <Link href="/faq" style={styles.navLink}>FAQ</Link>
+          <Link href="/tools/finance" style={styles.financeLink}>Finance Tools</Link>
         </nav>
       </div>
     </header>
@@ -85,5 +86,16 @@ const styles = {
     textDecoration: 'none',
     fontSize: '14px',
     fontWeight: 600,
+  },
+  // ← new: Finance Tools gets a green pill to stand out
+  financeLink: {
+    color: '#22c55e',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: 700,
+    background: 'rgba(34,197,94,0.1)',
+    border: '1px solid rgba(34,197,94,0.25)',
+    borderRadius: '20px',
+    padding: '5px 14px',
   },
 }
