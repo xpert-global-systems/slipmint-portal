@@ -1,115 +1,106 @@
 "use client";
+
 import { useState } from "react";
 
 export default function ChatBubble() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function sendMessage() {
-    if (!input.trim()) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || loading) return;
 
-    const userMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
-
-    const res = await fetch("/api/ai", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: input }),
-    });
-
-    const data = await res.json();
-    const botMessage = { sender: "bot", text: data.reply };
-
-    setMessages((prev) => [...prev, botMessage]);
+    // Instantly clear input and append user message for a snappy UI experience
     setInput("");
+    const userMessage = { sender: "user", text: trimmedInput };
+    setMessages((prev) => [...prev, userMessage]);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmedInput }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Network response error");
+      }
+
+      const data = await res.json();
+      const botMessage = { 
+        sender: "bot", 
+        text: data?.reply || "No response received from terminal." 
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (err) {
+      // Graceful error reporting inside the conversation loop
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Connection error. Unable to reach AI assistant." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {/* Floating Chat Trigger Button */}
       <div
         onClick={() => setOpen(!open)}
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          background: "#000",
-          color: "#fff",
-          padding: "15px",
-          borderRadius: "50%",
-          cursor: "pointer",
-          zIndex: 9999,
-          fontSize: "20px",
-        }}
+        style={styles.floatingButton}
       >
         💬
       </div>
 
-      {/* Chat Window */}
+      {/* Chat Interface Window */}
       {open && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "80px",
-            right: "20px",
-            width: "320px",
-            height: "420px",
-            background: "#fff",
-            borderRadius: "12px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            zIndex: 9999,
-          }}
-        >
-          {/* Messages */}
-          <div
-            style={{
-              flex: 1,
-              padding: "10px",
-              overflowY: "auto",
-              fontSize: "14px",
-            }}
-          >
+        <div style={styles.window}>
+          {/* Header Panel */}
+          <div style={styles.header}>
+            <span>SlipMint AI Assistant</span>
+          </div>
+
+          {/* Interactive Messages Container */}
+          <div style={styles.messagesArea}>
             {messages.map((msg, i) => (
               <div
                 key={i}
                 style={{
-                  marginBottom: "10px",
                   textAlign: msg.sender === "user" ? "right" : "left",
                 }}
               >
                 <span
-                  style={{
-                    display: "inline-block",
-                    padding: "8px 12px",
-                    borderRadius: "10px",
-                    background:
-                      msg.sender === "user" ? "#0070f3" : "#e5e5e5",
-                    color: msg.sender === "user" ? "#fff" : "#000",
-                  }}
+                  style={
+                    msg.sender === "user" ? styles.userBubble : styles.botBubble
+                  }
                 >
                   {msg.text}
                 </span>
               </div>
             ))}
+
+            {/* Dynamic Loading Response State */}
+            {loading && (
+              <div style={{ textAlign: "left" }}>
+                <span style={styles.loadingText}>AI Agent is analyzing...</span>
+              </div>
+            )}
           </div>
 
-          {/* Input */}
-          <div style={{ padding: "10px", borderTop: "1px solid #ddd" }}>
+          {/* Prompt Entry Box */}
+          <div style={styles.inputArea}>
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Ask me anything..."
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "8px",
-                border: "1px solid #ccc",
-              }}
+              disabled={loading}
+              placeholder={loading ? "Waiting for response..." : "Ask me anything..."}
+              style={styles.input}
             />
           </div>
         </div>
@@ -117,3 +108,97 @@ export default function ChatBubble() {
     </>
   );
 }
+
+const styles = {
+  floatingButton: {
+    position: "fixed",
+    bottom: "20px",
+    right: "20px",
+    background: "#3b82f6",
+    color: "#fff",
+    width: "56px",
+    height: "56px",
+    borderRadius: "50%",
+    cursor: "pointer",
+    zIndex: 9999,
+    fontSize: "24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
+  },
+  window: {
+    position: "fixed",
+    bottom: "90px",
+    right: "20px",
+    width: "340px",
+    height: "460px",
+    background: "#111827",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    zIndex: 9999,
+  },
+  header: {
+    padding: "14px 16px",
+    background: "#0f172a",
+    borderBottom: "1px solid #334155",
+    color: "white",
+    fontWeight: "bold",
+    fontSize: "14px",
+  },
+  messagesArea: {
+    flex: 1,
+    padding: "16px",
+    overflowY: "auto",
+    fontSize: "14px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  userBubble: {
+    display: "inline-block",
+    padding: "10px 14px",
+    borderRadius: "12px 12px 0 12px",
+    background: "#3b82f6",
+    color: "white",
+    maxWidth: "85%",
+    wordBreak: "break-word",
+    textAlign: "left",
+  },
+  botBubble: {
+    display: "inline-block",
+    padding: "10px 14px",
+    borderRadius: "12px 12px 12px 0",
+    background: "#1e293b",
+    color: "#f8fafc",
+    maxWidth: "85%",
+    wordBreak: "break-word",
+    border: "1px solid #334155",
+    textAlign: "left",
+  },
+  loadingText: {
+    fontSize: "12px",
+    color: "#64748b",
+    fontStyle: "italic",
+    paddingLeft: "4px",
+  },
+  inputArea: {
+    padding: "12px",
+    borderTop: "1px solid #334155",
+    background: "#0f172a",
+  },
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: "8px",
+    border: "1px solid #334155",
+    background: "#0b1220",
+    color: "white",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+};
