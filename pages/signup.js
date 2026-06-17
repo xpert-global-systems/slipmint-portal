@@ -21,12 +21,18 @@ export default function Signup() {
   const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // Using functional state update to guarantee state consistency 
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const validate = () => {
     if (!form.fullName.trim()) return "Full name is required";
-    if (!form.email.includes("@")) return "Enter a valid email";
+    
+    // Robust email regex format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) return "Enter a valid email";
+    
     if (form.password.length < 6)
       return "Password must be at least 6 characters";
     return null;
@@ -34,6 +40,8 @@ export default function Signup() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    if (loading) return; // Prevent duplicate submissions while loading
+
     setError("");
 
     const validationError = validate();
@@ -55,7 +63,6 @@ export default function Signup() {
       }
 
       const token = result.token;
-
       if (!token) {
         throw new Error("Authentication token missing");
       }
@@ -92,7 +99,7 @@ export default function Signup() {
         router.push("/check-email");
       }, 1200);
     } catch (err) {
-      setError(err.message || "Something went wrong");
+      setError(err?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -117,6 +124,7 @@ export default function Signup() {
           placeholder="Full Name"
           value={form.fullName}
           onChange={handleChange}
+          disabled={loading}
           style={styles.input}
         />
 
@@ -125,6 +133,7 @@ export default function Signup() {
           placeholder="Phone"
           value={form.phone}
           onChange={handleChange}
+          disabled={loading}
           style={styles.input}
         />
 
@@ -133,14 +142,17 @@ export default function Signup() {
           placeholder="Occupation"
           value={form.occupation}
           onChange={handleChange}
+          disabled={loading}
           style={styles.input}
         />
 
         <input
           name="email"
+          type="email"
           placeholder="Email"
           value={form.email}
           onChange={handleChange}
+          disabled={loading}
           style={styles.input}
         />
 
@@ -150,6 +162,7 @@ export default function Signup() {
           placeholder="Password"
           value={form.password}
           onChange={handleChange}
+          disabled={loading}
           style={styles.input}
         />
 
@@ -158,6 +171,7 @@ export default function Signup() {
           placeholder="Referral Code (optional)"
           value={form.referral}
           onChange={handleChange}
+          disabled={loading}
           style={styles.input}
         />
 
