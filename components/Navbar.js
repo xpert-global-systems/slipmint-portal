@@ -27,7 +27,7 @@ export default function Navbar() {
 
 const styles = {
   header: {
-    position: 'sticky' as const,
+    position: 'sticky',
     top: 0,
     zIndex: 100,
     background: 'rgba(8, 17, 32, 0.92)',
