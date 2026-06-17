@@ -101,3 +101,87 @@ export default function Login() {
     </Layout>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#0f172a",
+    padding: "20px",
+  },
+
+  card: {
+    width: "100%",
+    maxWidth: "420px",
+    padding: "30px",
+    borderRadius: "12px",
+    background: "#111827",
+  },
+
+  tag: {
+    color: "#60a5fa",
+    fontSize: "12px",
+    marginBottom: "10px",
+  },
+
+  title: {
+    color: "white",
+    fontSize: "22px",
+    marginBottom: "5px",
+  },
+
+  subtitle: {
+    color: "#94a3b8",
+    fontSize: "14px",
+    marginBottom: "20px",
+  },
+
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+
+  label: {
+    color: "#cbd5e1",
+    fontSize: "13px",
+  },
+
+  input: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #334155",
+    background: "#0b1220",
+    color: "white",
+  },
+
+  button: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#3b82f6",
+    color: "white",
+    fontWeight: "bold",
+  },
+
+  errorBox: {
+    background: "#7f1d1d",
+    color: "#fecaca",
+    padding: "10px",
+    borderRadius: "8px",
+    marginBottom: "10px",
+  },
+
+  footerText: {
+    marginTop: "15px",
+    color: "#94a3b8",
+    fontSize: "13px",
+    textAlign: "center",
+  },
+
+  link: {
+    color: "#60a5fa",
+  },
+};
