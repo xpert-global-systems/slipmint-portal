@@ -21,31 +21,25 @@ export default function Login() {
   }, []);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    if (!email || !password) {
-      setError("Email and password are required.");
-      return;
+  try {
+    const result = await login(email, password);
+
+    if (result.success) {
+      localStorage.setItem("token", result.token);
+      router.push("/dashboard");
+    } else {
+      setError(result.message);
     }
-
-    setLoading(true);
-
-    try {
-      const result = await login(email, password);
-
-      if (result?.success && result?.token) {
-        localStorage.setItem("token", result.token);
-        router.push("/dashboard");
-      } else {
-        setError(result?.message || "Invalid login credentials.");
-      }
-    } catch (err) {
-      setError("Server error. Try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    setError("Login failed. Try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Layout>
