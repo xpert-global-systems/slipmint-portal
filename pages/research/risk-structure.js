@@ -141,7 +141,7 @@ const styles = {
     borderRadius: "6px",
     fontSize: "12px",
     fontWeight: "700",
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase",
   },
   mainTitle: {
     fontSize: "32px",
