@@ -5,8 +5,12 @@ import {
   signOut,
   sendEmailVerification,
   onAuthStateChanged,
+  reload,
 } from "firebase/auth";
 
+/**
+ * LOGIN
+ */
 export async function login(email, password) {
   try {
     const cred = await signInWithEmailAndPassword(
@@ -15,7 +19,20 @@ export async function login(email, password) {
       password
     );
 
-    const token = await cred.user.getIdToken();
+    // 🔥 ensure latest emailVerified status
+    await reload(cred.user);
+
+    // BLOCK UNVERIFIED USERS
+    if (!cred.user.emailVerified) {
+      await signOut(auth);
+
+      return {
+        success: false,
+        message: "Email not verified. Please check your inbox.",
+      };
+    }
+
+    const token = await cred.user.getIdToken(true);
 
     return {
       success: true,
@@ -23,6 +40,7 @@ export async function login(email, password) {
       user: {
         uid: cred.user.uid,
         email: cred.user.email,
+        emailVerified: cred.user.emailVerified,
       },
     };
   } catch (err) {
@@ -33,6 +51,9 @@ export async function login(email, password) {
   }
 }
 
+/**
+ * SIGNUP
+ */
 export async function signup(email, password) {
   try {
     const cred = await createUserWithEmailAndPassword(
@@ -41,9 +62,10 @@ export async function signup(email, password) {
       password
     );
 
+    // send verification email immediately
     await sendEmailVerification(cred.user);
 
-    const token = await cred.user.getIdToken();
+    const token = await cred.user.getIdToken(true);
 
     return {
       success: true,
@@ -51,6 +73,7 @@ export async function signup(email, password) {
       user: {
         uid: cred.user.uid,
         email: cred.user.email,
+        emailVerified: cred.user.emailVerified,
       },
     };
   } catch (err) {
@@ -61,13 +84,13 @@ export async function signup(email, password) {
   }
 }
 
+/**
+ * LOGOUT
+ */
 export async function logout() {
   try {
     await signOut(auth);
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (err) {
     return {
       success: false,
@@ -76,6 +99,9 @@ export async function logout() {
   }
 }
 
+/**
+ * GET CURRENT USER
+ */
 export async function getUser() {
   try {
     const user = auth.currentUser;
@@ -87,7 +113,9 @@ export async function getUser() {
       };
     }
 
-    const token = await user.getIdToken();
+    await reload(user);
+
+    const token = await user.getIdToken(true);
 
     return {
       success: true,
@@ -95,6 +123,7 @@ export async function getUser() {
       user: {
         uid: user.uid,
         email: user.email,
+        emailVerified: user.emailVerified,
       },
     };
   } catch (err) {
@@ -105,6 +134,9 @@ export async function getUser() {
   }
 }
 
+/**
+ * AUTH LISTENER
+ */
 export function subscribeAuth(callback) {
   return onAuthStateChanged(auth, callback);
 }
