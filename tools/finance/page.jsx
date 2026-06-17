@@ -1,0 +1,549 @@
+Copy and paste this entire block into `tools/finance/page.jsx`:
+
+```jsx
+"use client";
+import { useEffect, useRef, useState } from "react";
+
+const CDN = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js";
+
+const TABS = [
+  { id: "retirement", label: "📈 Retirement 401(k)" },
+  { id: "tax",        label: "🧾 Tax Estimator" },
+  { id: "salary",     label: "💼 Salary Optimizer" },
+  { id: "futures",    label: "🔮 Possible Futures" },
+];
+
+const fmtShort = (n) => {
+  if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+  if (Math.abs(n) >= 1e3) return "$" + (n / 1e3).toFixed(1) + "K";
+  return "$" + Math.round(n).toLocaleString();
+};
+const fmt = (n, d = 0) =>
+  n < 0
+    ? "-$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d })
+    : "$" + n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+const TAX_BRACKETS = {
+  Single: [[11600,0.10],[47150,0.12],[100525,0.22],[191950,0.24],[243725,0.32],[609350,0.35],[Infinity,0.37]],
+  MFJ:    [[23200,0.10],[94300,0.12],[201050,0.22],[383900,0.24],[487450,0.32],[731200,0.35],[Infinity,0.37]],
+  MFS:    [[11600,0.10],[47150,0.12],[100525,0.22],[191950,0.24],[243725,0.32],[365600,0.35],[Infinity,0.37]],
+  HH:     [[16550,0.10],[63100,0.12],[100500,0.22],[191950,0.24],[243700,0.32],[609350,0.35],[Infinity,0.37]],
+};
+const STD_DED = { Single: 14600, MFJ: 29200, MFS: 14600, HH: 21900 };
+
+function calcFederalTax(taxable, status) {
+  const brackets = TAX_BRACKETS[status] || TAX_BRACKETS.Single;
+  let tax = 0, prev = 0, marginal = 0;
+  for (const [limit, rate] of brackets) {
+    if (taxable <= prev) break;
+    tax += (Math.min(taxable, limit) - prev) * rate;
+    marginal = rate;
+    prev = limit;
+  }
+  return { tax, marginal };
+}
+
+const GOAL_COSTS = {
+  "🏠 Buy a Home": 250000, "🚀 Start a Business": 50000,
+  "🎓 Fund Education": 80000, "🌍 Travel Fund": 15000,
+  "👶 Have Children": 20000, "🏖️ Early Retirement": 500000,
+};
+
+function projectWealth(nw, mo, years, rate) {
+  let bal = nw;
+  const pts = [Math.round(bal)];
+  const mr = rate / 12;
+  for (let y = 1; y <= years; y++) {
+    for (let m = 0; m < 12; m++) bal = bal * (1 + mr) + mo;
+    pts.push(Math.round(bal));
+  }
+  return { final: bal, pts };
+}
+
+function Slider({ label, min, max, step = 1, value, onChange, prefix = "", suffix = "", color = "green" }) {
+  const colorMap = { green: "#4fffb0", purple: "#7b61ff", gold: "#ffd166", red: "#ff6b6b" };
+  const c = colorMap[color];
+  const display = prefix === "$" ? fmtShort(value) : value + suffix;
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#6b7394", marginBottom: 8, fontWeight: 500 }}>
+        <span>{label}</span>
+        <span style={{ fontFamily: "monospace", color: c, fontWeight: 700 }}>{display}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        style={{ width: "100%", accentColor: c, cursor: "pointer" }} />
+    </div>
+  );
+}
+
+function StatCard({ label, value, color, sub, full }) {
+  const colorMap = { green: "#4fffb0", purple: "#7b61ff", gold: "#ffd166", red: "#ff6b6b", default: "#e8eaf0" };
+  return (
+    <div style={{ background: "#111318", border: "1px solid #1e2130", borderRadius: 10, padding: 16, gridColumn: full ? "1/-1" : undefined }}>
+      <div style={{ fontSize: 11, color: "#6b7394", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 600, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 700, color: colorMap[color] || colorMap.default, lineHeight: 1.2 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: "#6b7394", marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function ChartCanvas({ id, height = 280 }) {
+  return <div style={{ position: "relative", width: "100%", height }}><canvas id={id} /></div>;
+}
+
+const charts = {};
+function mkChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx || !window.Chart) return;
+  window.Chart.defaults.color = "#6b7394";
+  window.Chart.defaults.font.family = "inherit";
+  charts[id] = new window.Chart(ctx, config);
+}
+
+function Card({ title, children, style }) {
+  return (
+    <div style={{ background: "#16181f", border: "1px solid #1e2130", borderRadius: 14, padding: 24, ...style }}>
+      {title && <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "#6b7394", marginBottom: 20 }}>{title}</div>}
+      {children}
+    </div>
+  );
+}
+
+function toggleStyle(active, accent) {
+  return {
+    background: active ? `${accent}18` : "#111318",
+    border: `1px solid ${active ? accent : "#1e2130"}`,
+    borderRadius: 8, color: active ? accent : "#6b7394",
+    fontFamily: "inherit", fontSize: 13, padding: "8px 14px",
+    cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s",
+  };
+}
+
+const statsGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 0 };
+
+function gridStyle() {
+  if (typeof window !== "undefined" && window.innerWidth < 768) {
+    return { display: "grid", gridTemplateColumns: "1fr", gap: 20 };
+  }
+  return { display: "grid", gridTemplateColumns: "clamp(300px,35%,380px) 1fr", gap: 20, alignItems: "start" };
+}
+
+// ── RETIREMENT TAB
+function RetirementTab() {
+  const [age,  setAge]  = useState(30);
+  const [ret,  setRet]  = useState(65);
+  const [bal,  setBal]  = useState(25000);
+  const [sal,  setSal]  = useState(75000);
+  const [cPct, setCPct] = useState(6);
+  const [mPct, setMPct] = useState(3);
+  const [rate, setRate] = useState(7);
+  const [outs, setOuts] = useState({});
+
+  useEffect(() => {
+    const years = Math.max(ret - age, 1);
+    const annContrib = sal * ((cPct + mPct) / 100);
+    const mo = annContrib / 12;
+    const r  = rate / 100;
+    let b = bal, totalC = 0;
+    const labels = [], totals = [], cLine = [], iLine = [];
+    for (let y = 0; y <= years; y++) {
+      labels.push(age + y);
+      totals.push(Math.round(b));
+      cLine.push(Math.round(bal + totalC));
+      iLine.push(Math.round(Math.max(b - bal - totalC, 0)));
+      if (y < years) {
+        for (let m = 0; m < 12; m++) b = b * (1 + r / 12) + mo;
+        totalC += annContrib;
+      }
+    }
+    const final = totals[totals.length - 1];
+    setOuts({ final, totalC: bal + totalC, interest: final - bal - totalC, monthly: (final * 0.04) / 12, years });
+    setTimeout(() => mkChart("retChart", {
+      type: "line",
+      data: { labels, datasets: [
+        { label: "Balance", data: totals, borderColor: "#4fffb0", backgroundColor: "rgba(79,255,176,0.06)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5 },
+        { label: "Contributions", data: cLine, borderColor: "#6b7394", tension: 0.35, pointRadius: 0, borderWidth: 1.5, borderDash: [4,4] },
+        { label: "Interest", data: iLine, borderColor: "#7b61ff", backgroundColor: "rgba(123,97,255,0.05)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 1.5 },
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { position: "top", labels: { boxWidth: 12, padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + fmtShort(c.raw) } } },
+        scales: { x: { grid: { color: "#1e2130" }, ticks: { font: { size: 11 }, maxTicksLimit: 8 } }, y: { grid: { color: "#1e2130" }, ticks: { callback: v => fmtShort(v), font: { size: 11 }, maxTicksLimit: 6 } } }
+      }
+    }), 50);
+  }, [age, ret, bal, sal, cPct, mPct, rate]);
+
+  return (
+    <div style={gridStyle()}>
+      <Card title="Your Parameters">
+        <Slider label="Current Age"          min={18} max={65}     value={age}  onChange={setAge}  suffix="" />
+        <Slider label="Retirement Age"       min={50} max={80}     value={ret}  onChange={setRet}  suffix="" />
+        <Slider label="Current Balance"      min={0}  max={500000} step={1000}  value={bal}  onChange={setBal}  prefix="$" />
+        <Slider label="Annual Salary"        min={20000} max={500000} step={1000} value={sal} onChange={setSal} prefix="$" />
+        <Slider label="Your Contribution %"  min={1}  max={23}     value={cPct} onChange={setCPct} suffix="%" />
+        <Slider label="Employer Match %"     min={0}  max={10} step={0.5} value={mPct} onChange={setMPct} suffix="%" />
+        <Slider label="Expected Annual Return" min={1} max={15} step={0.5} value={rate} onChange={setRate} suffix="%" />
+      </Card>
+      <div>
+        <div style={statsGrid}>
+          <StatCard label="Projected Balance"      value={fmtShort(outs.final||0)}    color="green"  sub={`in ${outs.years||0} years`} />
+          <StatCard label="Total Contributions"    value={fmtShort(outs.totalC||0)}                  sub="yours + employer" />
+          <StatCard label="Interest Earned"        value={fmtShort(outs.interest||0)} color="purple" sub="compound magic" />
+          <StatCard label="Monthly at Retirement"  value={fmtShort(outs.monthly||0)}  color="gold"   sub="4% withdrawal rule" />
+        </div>
+        <Card title="Compound Growth Over Time" style={{ marginTop: 16 }}>
+          <ChartCanvas id="retChart" height={260} />
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ── TAX TAB
+function TaxTab() {
+  const [income,   setIncome]   = useState(85000);
+  const [status,   setStatus]   = useState("Single");
+  const [dedType,  setDedType]  = useState("Standard");
+  const [itemized, setItemized] = useState(20000);
+  const [pretax,   setPretax]   = useState(6900);
+  const [withhold, setWithhold] = useState(12000);
+  const [outs, setOuts] = useState({});
+
+  const statusMap = { "Single":"Single","Married Joint":"MFJ","Married Sep.":"MFS","Head of HH":"HH" };
+
+  useEffect(() => {
+    const st = statusMap[status] || "Single";
+    const stdDed = STD_DED[st];
+    const ded = dedType === "Itemized" ? Math.max(itemized, stdDed) : stdDed;
+    const agi = Math.max(income - pretax, 0);
+    const taxable = Math.max(agi - ded, 0);
+    const { tax, marginal } = calcFederalTax(taxable, st);
+    const fica = Math.min(income, 160200) * 0.062 + income * 0.0145;
+    const total = tax + fica;
+    const net = income - total - pretax;
+    const eff = income > 0 ? total / income * 100 : 0;
+    const refund = withhold - tax;
+    setOuts({ taxable, tax, marginal: marginal * 100, fica, net, eff, refund });
+    setTimeout(() => mkChart("taxChart", {
+      type: "doughnut",
+      data: { labels: ["Take-Home","Fed Tax","FICA","Pre-tax"], datasets: [{
+        data: [Math.max(net, 0), tax, fica, pretax],
+        backgroundColor: ["#4fffb0","#7b61ff","#ff6b6b","#ffd166"],
+        borderColor: "#16181f", borderWidth: 2, hoverOffset: 6,
+      }]},
+      options: { responsive: true, maintainAspectRatio: false, cutout: "62%",
+        plugins: { legend: { position: "right", labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
+          tooltip: { callbacks: { label: c => " " + c.label + ": " + fmtShort(c.raw) + " (" + (income > 0 ? (c.raw/income*100).toFixed(1) : 0) + "%)" } }
+        }
+      }
+    }), 50);
+  }, [income, status, dedType, itemized, pretax, withhold]);
+
+  const taxItems = [
+    { label: "Federal Income Tax",    v: outs.tax||0,  color: "#7b61ff" },
+    { label: "Social Security (6.2%)",v: Math.min(income,160200)*0.062, color: "#ff6b6b" },
+    { label: "Medicare (1.45%)",      v: income*0.0145, color: "#ffd166" },
+    { label: "Pre-tax Deductions",    v: pretax,        color: "#4fffb0" },
+  ];
+
+  return (
+    <div style={gridStyle()}>
+      <Card title="Income & Filing Details">
+        <Slider label="Annual Gross Income" min={10000} max={500000} step={1000} value={income} onChange={setIncome} prefix="$" color="purple" />
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: "#6b7394", marginBottom: 8, fontWeight: 500 }}>Filing Status</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {["Single","Married Joint","Married Sep.","Head of HH"].map(s => (
+              <button key={s} onClick={() => setStatus(s)} style={toggleStyle(status === s, "#7b61ff")}>{s}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: "#6b7394", marginBottom: 8, fontWeight: 500 }}>Deduction Type</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {["Standard","Itemized"].map(d => (
+              <button key={d} onClick={() => setDedType(d)} style={toggleStyle(dedType === d, "#7b61ff")}>{d}</button>
+            ))}
+          </div>
+        </div>
+        {dedType === "Itemized" && <Slider label="Itemized Amount" min={0} max={100000} step={500} value={itemized} onChange={setItemized} prefix="$" color="purple" />}
+        <Slider label="Pre-tax Deductions (401k, HSA)" min={0} max={30000} step={100} value={pretax} onChange={setPretax} prefix="$" color="purple" />
+        <Slider label="Tax Withholding (YTD)" min={0} max={100000} step={500} value={withhold} onChange={setWithhold} prefix="$" color="purple" />
+      </Card>
+      <div>
+        <div style={statsGrid}>
+          <StatCard label="Taxable Income"   value={fmtShort(outs.taxable||0)} color="purple" sub="after deductions" />
+          <StatCard label="Federal Tax Owed" value={fmtShort(outs.tax||0)}     color="red"    sub={`${(outs.marginal||0).toFixed(0)}% marginal`} />
+          <StatCard label="Effective Rate"   value={(outs.eff||0).toFixed(1)+"%"}             sub="of gross income" />
+          <StatCard label="Net Take-Home"    value={fmtShort(outs.net||0)}     color="green"  sub={fmtShort((outs.net||0)/12)+"/mo"} />
+          <StatCard label="Refund / Owed" full
+            value={(outs.refund||0) >= 0 ? "↑ Refund: "+fmt(outs.refund||0) : "↓ Owed: "+fmt(Math.abs(outs.refund||0))}
+            color={(outs.refund||0) >= 0 ? "green" : "red"} />
+        </div>
+        <Card title="Tax Breakdown" style={{ marginTop: 16 }}>
+          {taxItems.map(item => {
+            const pct = income > 0 ? Math.min(item.v / income * 100, 100) : 0;
+            return (
+              <div key={item.label} style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
+                  <span style={{ color: "#6b7394" }}>{item.label}</span>
+                  <span style={{ fontFamily: "monospace", fontSize: 12 }}>{fmt(item.v)}</span>
+                </div>
+                <div style={{ height: 5, background: "#1e2130", borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: pct+"%", background: item.color, borderRadius: 4, transition: "width 0.4s" }} />
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ height: 1, background: "#1e2130", margin: "16px 0" }} />
+          <ChartCanvas id="taxChart" height={180} />
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ── SALARY TAB
+function SalaryTab() {
+  const [salary,  setSalary]  = useState(75000);
+  const [hours,   setHours]   = useState(45);
+  const [workExp, setWorkExp] = useState(4800);
+  const [side,    setSide]    = useState(500);
+  const [exp,     setExp]     = useState(3500);
+  const [taxRate, setTaxRate] = useState(22);
+  const [outs, setOuts] = useState({});
+
+  useEffect(() => {
+    const total    = salary + side * 12;
+    const afterTax = total * (1 - taxRate / 100);
+    const trueAnn  = afterTax - workExp;
+    const hrs      = hours * 52;
+    const hourly   = hrs > 0 ? trueAnn / hrs : 0;
+    const moIncome = trueAnn / 12;
+    const profit   = moIncome - exp;
+    const margin   = moIncome > 0 ? profit / moIncome * 100 : 0;
+    setOuts({ hourly, profit, margin, trueAnn });
+    setTimeout(() => mkChart("salChart", {
+      type: "bar",
+      data: { labels: ["Salary (net)","Side Hustle","Work Expenses","Living Exp.","Monthly Profit"],
+        datasets: [{ data: [salary/12*(1-taxRate/100), side, workExp/12, exp, profit],
+          backgroundColor: ["rgba(255,209,102,0.7)","rgba(79,255,176,0.7)","rgba(255,107,107,0.5)","rgba(107,115,148,0.5)", profit>=0?"rgba(79,255,176,0.9)":"rgba(255,107,107,0.9)"],
+          borderColor: ["#ffd166","#4fffb0","#ff6b6b","#6b7394", profit>=0?"#4fffb0":"#ff6b6b"],
+          borderWidth: 1, borderRadius: 6,
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => " " + fmtShort(c.raw) } } },
+        scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: "#1e2130" }, ticks: { callback: v => fmtShort(v), font: { size: 11 } } } }
+      }
+    }), 50);
+  }, [salary, hours, workExp, side, exp, taxRate]);
+
+  const perDay = outs.hourly ? outs.hourly * (hours / 5) : 0;
+
+  return (
+    <div style={gridStyle()}>
+      <Card title="Income Sources">
+        <Slider label="Gross Annual Salary"          min={20000} max={500000} step={1000} value={salary}  onChange={setSalary}  prefix="$" color="gold" />
+        <Slider label="Hours Worked / Week"          min={20}    max={80}               value={hours}   onChange={setHours}   suffix=" hrs" color="gold" />
+        <Slider label="Work-Related Expenses / Year" min={0}     max={30000}  step={100} value={workExp} onChange={setWorkExp} prefix="$" color="gold" />
+        <Slider label="Monthly Side-Hustle Income"   min={0}     max={10000}  step={100} value={side}    onChange={setSide}    prefix="$" color="gold" />
+        <Slider label="Monthly Living Expenses"      min={1000}  max={20000}  step={100} value={exp}     onChange={setExp}     prefix="$" color="gold" />
+        <Slider label="Est. Tax Rate"                min={0}     max={45}               value={taxRate} onChange={setTaxRate} suffix="%" color="gold" />
+      </Card>
+      <div>
+        <div style={statsGrid}>
+          <StatCard label="True Hourly Wage"  value={fmt(outs.hourly||0, 2)} color="gold"   sub="after all costs & taxes" />
+          <StatCard label="Monthly Profit"    value={fmtShort(outs.profit||0)} color="green" sub="income minus expenses" />
+          <StatCard label="Profit Margin"     value={(outs.margin||0).toFixed(1)+"%"}         sub="of total income" />
+          <StatCard label="Annual Net"        value={fmtShort(outs.trueAnn||0)}               sub="after expenses" />
+        </div>
+        <Card title="Income vs Expenses" style={{ marginTop: 16, marginBottom: 16 }}>
+          <ChartCanvas id="salChart" height={200} />
+        </Card>
+        <Card title="Financial Milestones">
+          {[1000,5000,10000,50000,100000].map(g => {
+            const days = perDay > 0 ? Math.ceil(g / perDay) : "∞";
+            const yrs  = perDay > 0 ? (g / (perDay * 260)).toFixed(1) : "∞";
+            return (
+              <div key={g} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#111318", border: "1px solid #1e2130", borderRadius: 10, padding: "14px 16px", marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{fmt(g)}</div>
+                  <div style={{ fontSize: 12, color: "#6b7394", marginTop: 2 }}>{days} work days · {yrs} yrs</div>
+                </div>
+                <div style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 700, color: "#ffd166" }}>{days}d</div>
+              </div>
+            );
+          })}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ── FUTURES TAB
+function FuturesTab() {
+  const [nw,        setNw]        = useState(45000);
+  const [savings,   setSavings]   = useState(1200);
+  const [years,     setYears]     = useState(20);
+  const [inflation, setInflation] = useState(3);
+  const [goals,     setGoals]     = useState(["🏠 Buy a Home"]);
+  const [scenarios, setScenarios] = useState({ con:{nom:0,real:0}, mod:{nom:0,real:0}, agg:{nom:0,real:0} });
+
+  const toggleGoal = g => setGoals(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
+
+  useEffect(() => {
+    const inf = inflation / 100;
+    const con = projectWealth(nw, savings, years, 0.05);
+    const mod = projectWealth(nw, savings, years, 0.08);
+    const agg = projectWealth(nw, savings, years, 0.11);
+    setScenarios({
+      con: { nom: con.final, real: con.final / Math.pow(1 + inf, years) },
+      mod: { nom: mod.final, real: mod.final / Math.pow(1 + inf, years) },
+      agg: { nom: agg.final, real: agg.final / Math.pow(1 + inf, years) },
+    });
+    const labels = Array.from({ length: years + 1 }, (_, i) => "Yr " + i);
+    setTimeout(() => mkChart("futChart", {
+      type: "line",
+      data: { labels, datasets: [
+        { label: "Conservative (5%)", data: con.pts, borderColor: "#6b7394", backgroundColor: "rgba(107,115,148,0.05)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 },
+        { label: "Moderate (8%)",     data: mod.pts, borderColor: "#4fffb0", backgroundColor: "rgba(79,255,176,0.07)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5 },
+        { label: "Aggressive (11%)",  data: agg.pts, borderColor: "#ff6b6b", backgroundColor: "rgba(255,107,107,0.06)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 },
+      ]},
+      options: { responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { position: "top", labels: { boxWidth: 12, padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + fmtShort(c.raw) } } },
+        scales: { x: { grid: { color: "#1e2130" }, ticks: { font: { size: 11 }, maxTicksLimit: 8 } }, y: { grid: { color: "#1e2130" }, ticks: { callback: v => fmtShort(v), font: { size: 11 }, maxTicksLimit: 6 } } }
+      }
+    }), 50);
+  }, [nw, savings, years, inflation]);
+
+  return (
+    <div style={gridStyle()}>
+      <Card title="Your Starting Point">
+        <Slider label="Current Net Worth"     min={0}   max={1000000} step={1000} value={nw}        onChange={setNw}        prefix="$" color="red" />
+        <Slider label="Monthly Savings"       min={0}   max={10000}   step={50}   value={savings}   onChange={setSavings}   prefix="$" color="red" />
+        <Slider label="Years to Model"        min={5}   max={40}                  value={years}     onChange={setYears}     suffix=" yrs" color="red" />
+        <Slider label="Inflation Rate"        min={1}   max={8}       step={0.5}  value={inflation} onChange={setInflation} suffix="%" color="red" />
+        <div>
+          <div style={{ fontSize: 13, color: "#6b7394", marginBottom: 10, fontWeight: 500 }}>Life Goals</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {Object.keys(GOAL_COSTS).map(g => (
+              <span key={g} onClick={() => toggleGoal(g)} style={{
+                padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: "1px solid",
+                ...(goals.includes(g) ? { background: "rgba(123,97,255,0.12)", borderColor: "#7b61ff", color: "#7b61ff" }
+                                      : { background: "#111318", borderColor: "#1e2130", color: "#6b7394" })
+              }}>{g}</span>
+            ))}
+          </div>
+        </div>
+      </Card>
+      <div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
+          {[
+            { label: "Conservative", rate: "5%",  data: scenarios.con, color: "#6b7394", bg: "rgba(107,115,148,0.08)", border: "rgba(107,115,148,0.3)" },
+            { label: "Moderate",     rate: "8%",  data: scenarios.mod, color: "#4fffb0", bg: "rgba(79,255,176,0.06)",  border: "rgba(79,255,176,0.25)" },
+            { label: "Aggressive",   rate: "11%", data: scenarios.agg, color: "#ff6b6b", bg: "rgba(255,107,107,0.06)", border: "rgba(255,107,107,0.25)" },
+          ].map(s => (
+            <div key={s.label} style={{ background: s.bg, border: "1px solid "+s.border, borderRadius: 10, padding: 16 }}>
+              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: s.color, marginBottom: 8 }}>{s.label}</div>
+              <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 700, color: s.color, marginBottom: 4 }}>{fmtShort(s.data.nom)}</div>
+              <div style={{ fontSize: 11, color: "#6b7394" }}>{s.rate} return</div>
+              <div style={{ fontSize: 11, color: "#6b7394", marginTop: 2 }}>Real: {fmtShort(s.data.real)}</div>
+            </div>
+          ))}
+        </div>
+        <Card title="Wealth Trajectory" style={{ marginBottom: 16 }}>
+          <ChartCanvas id="futChart" height={300} />
+        </Card>
+        <Card title="Goal Cost Estimates">
+          {goals.length === 0
+            ? <div style={{ fontSize: 13, color: "#6b7394" }}>Select goals above to see estimates.</div>
+            : goals.map(g => {
+                const cost = GOAL_COSTS[g];
+                const yrs  = savings > 0 ? (cost / (savings * 12)).toFixed(1) : "∞";
+                return (
+                  <div key={g} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#111318", border: "1px solid #1e2130", borderRadius: 10, padding: "14px 16px", marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{g}</div>
+                      <div style={{ fontSize: 12, color: "#6b7394", marginTop: 2 }}>{yrs} yrs at current savings · Est. {fmtShort(cost)}</div>
+                    </div>
+                    <div style={{ fontFamily: "monospace", fontSize: 14, fontWeight: 700, color: "#ffd166" }}>{fmtShort(cost)}</div>
+                  </div>
+                );
+              })
+          }
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ── PAGE ROOT
+export default function FinancePage() {
+  const [active, setActive] = useState("retirement");
+
+  useEffect(() => {
+    if (window.Chart) return;
+    const s = document.createElement("script");
+    s.src = CDN; s.async = true;
+    document.head.appendChild(s);
+  }, []);
+
+  const accentMap = { retirement: "#4fffb0", tax: "#7b61ff", salary: "#ffd166", futures: "#ff6b6b" };
+  const accent = accentMap[active];
+
+  return (
+    <div style={{ background: "#0a0b0f", minHeight: "100vh", color: "#e8eaf0", fontFamily: "inherit" }}>
+
+      {/* Hero */}
+      <div style={{ padding: "48px 32px 32px", borderBottom: "1px solid #1e2130", maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(79,255,176,0.08)", border: "1px solid rgba(79,255,176,0.2)", borderRadius: 20, padding: "4px 14px", fontSize: 12, color: "#4fffb0", fontWeight: 600, marginBottom: 20, letterSpacing: "0.5px" }}>
+          ◆ SLIPMINT FINANCE TOOLS
+        </div>
+        <h1 style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.15, marginBottom: 14 }}>
+          Your Financial<br />
+          <span style={{ color: accent, transition: "color 0.3s" }}>Command Center</span>
+        </h1>
+        <p style={{ color: "#6b7394", fontSize: 16, maxWidth: 520, lineHeight: 1.7 }}>
+          Four precision tools — retirement projection, tax estimation, salary optimization, and future scenario modeling. Real-time. No guesswork.
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ borderBottom: "1px solid #1e2130", padding: "0 32px", overflowX: "auto", display: "flex", gap: 4 }}>
+        {TABS.map(tab => (
+          <button key={tab.id} onClick={() => setActive(tab.id)} style={{
+            background: "none", border: "none",
+            borderBottom: `2px solid ${active === tab.id ? accent : "transparent"}`,
+            color: active === tab.id ? accent : "#6b7394",
+            fontFamily: "inherit", fontSize: 13, fontWeight: 500,
+            padding: "14px 18px 12px", cursor: "pointer", whiteSpace: "nowrap",
+            transition: "color 0.2s, border-color 0.2s",
+          }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Panel */}
+      <div style={{ padding: "32px", maxWidth: 1200, margin: "0 auto" }}>
+        {active === "retirement" && <RetirementTab />}
+        {active === "tax"        && <TaxTab />}
+        {active === "salary"     && <SalaryTab />}
+        {active === "futures"    && <FuturesTab />}
+      </div>
+
+      {/* Footer note */}
+      <div style={{ borderTop: "1px solid #1e2130", padding: "24px 32px", textAlign: "center", color: "#6b7394", fontSize: 12 }}>
+        SlipMint Finance Tools · Estimates only, not financial advice · Built for traders who want clarity
+      </div>
+    </div>
+  );
+}
+```
+
+That's the complete file — paste it all, commit, and you're done. Then go update `Navbar.js` with the Finance Tools link as the final step.
