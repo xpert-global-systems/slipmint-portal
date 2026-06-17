@@ -31,15 +31,16 @@ export default function Research() {
     setResult("");
 
     try {
-      const res = await fetch("/api/research", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: query,
-        }),
-      });
+      const res = await fetch("/api/ai-research", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    query: query,
+  }),
+});
+
 
       const data = await res.json();
 
