@@ -1,24 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { login } from "../services/auth";
 
 export default function Login() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // optional: redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
-    const result = await login(email, password);
+    if (!email || !password) {
+      setError("Email and password are required.");
+      return;
+    }
 
-    if (result.success) {
-      localStorage.setItem("token", result.token);
-      window.location.href = "/dashboard";
-    } else {
-      setError(result.message || "Login failed");
+    setLoading(true);
+
+    try {
+      const result = await login(email, password);
+
+      if (result?.success && result?.token) {
+        localStorage.setItem("token", result.token);
+        router.push("/dashboard");
+      } else {
+        setError(result?.message || "Invalid login credentials.");
+      }
+    } catch (err) {
+      setError("Server error. Try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -29,10 +54,10 @@ export default function Login() {
           <span style={styles.tag}>Member Access</span>
           <h1 style={styles.title}>Login to SlipMint</h1>
           <p style={styles.subtitle}>
-            Access the Founder Vault, premium research, and member-only updates.
+            Access your dashboard, Founder Vault, and trading tools.
           </p>
 
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <div style={styles.errorBox}>{error}</div>}
 
           <form onSubmit={handleLogin} style={styles.form}>
             <label style={styles.label}>Email</label>
@@ -41,7 +66,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={styles.input}
-              required
+              disabled={loading}
             />
 
             <label style={styles.label}>Password</label>
@@ -50,18 +75,25 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}
-              required
+              disabled={loading}
             />
 
-            <button type="submit" style={styles.button}>
-              Login
+            <button
+              type="submit"
+              style={{
+                ...styles.button,
+                opacity: loading ? 0.7 : 1,
+              }}
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Login"}
             </button>
           </form>
 
           <p style={styles.footerText}>
-            Do not have an account?{" "}
+            No account?{" "}
             <Link href="/signup" style={styles.link}>
-              Create one
+              Sign up
             </Link>
           </p>
         </div>
@@ -69,5 +101,3 @@ export default function Login() {
     </Layout>
   );
 }
-
-const styles = { /* your styles unchanged */ };
