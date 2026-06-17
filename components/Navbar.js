@@ -42,7 +42,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: '16px',
-    flexWrap: 'wrap' as const,
+    flexWrap: 'wrap',
   },
   brandWrap: {
     display: 'flex',
@@ -78,7 +78,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    flexWrap: 'wrap' as const,
+    flexWrap: 'wrap',
   },
   navLink: {
     color: '#dce7f3',

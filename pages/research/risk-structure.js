@@ -169,7 +169,7 @@ const styles = {
   },
   feed: {
     display: "flex",
-    flexDirection: "column" as const,
+    flexDirection: "column",
     gap: "24px",
   },
   pageCard: {
@@ -180,8 +180,8 @@ const styles = {
   },
   cardHeader: {
     display: "flex",
-    alignItems: "flex-start" as const,
-    flexDirection: "column" as const,
+    alignItems: "flex-start",
+    flexDirection: "column",
     gap: "4px",
     marginBottom: "16px",
     borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -204,7 +204,7 @@ const styles = {
     padding: 0,
     margin: 0,
     display: "flex",
-    flexDirection: "column" as const,
+    flexDirection: "column",
     gap: "10px",
   },
   pointItem: {
@@ -220,7 +220,7 @@ const styles = {
   },
   noResults: {
     color: "#b8c7d9",
-    textAlign: "center" as const,
+    textAlign: "center",
     marginTop: "20px",
   }
 };

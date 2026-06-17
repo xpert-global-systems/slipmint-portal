@@ -174,17 +174,17 @@ const styles = {
     display: "flex",
     gap: "12px",
     marginBottom: "40px",
-    flexWrap: "wrap" as const,
+    flexWrap: "wrap",
   },
   inputContainer: {
-    position: "relative" as const,
+    position: "relative",
     flex: 1,
     minWidth: "290px",
     display: "flex",
     alignItems: "center",
   },
   searchIcon: {
-    position: "absolute" as const,
+    position: "absolute",
     left: "16px",
     fontSize: "16px",
     opacity: 0.5,
@@ -237,7 +237,7 @@ const styles = {
     letterSpacing: "0.5px",
   },
   resultText: {
-    whiteSpace: "pre-wrap" as const,
+    whiteSpace: "pre-wrap",
     lineHeight: "1.7",
     color: "#cbd5e1",
     fontSize: "15px",
@@ -266,8 +266,8 @@ const styles = {
     padding: "26px",
     border: "1px solid rgba(255,255,255,0.05)",
     display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "space-between" as const,
+    flexDirection: "column",
+    justifyContent: "space-between",
     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
   },
   cardMeta: {
@@ -306,7 +306,7 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     width: "100%",
-    textAlign: "center" as const,
+    textAlign: "center",
     transition: "all 0.2s",
   }
 };
