@@ -8,7 +8,10 @@ if (!admin.apps.length) {
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(
+        /\\n/g,
+        "\n"
+      ),
     }),
   });
 }
@@ -62,7 +65,16 @@ export default async function handler(req, res) {
 
     const token = authHeader.split("Bearer ")[1];
 
+    // 🔐 VERIFY TOKEN
     const decoded = await admin.auth().verifyIdToken(token);
+
+    // 🚨 BLOCK UNVERIFIED EMAIL USERS
+    if (!decoded.email_verified) {
+      return res.status(403).json({
+        success: false,
+        message: "Email not verified",
+      });
+    }
 
     const errors = validateInput(req.body);
 
@@ -74,29 +86,46 @@ export default async function handler(req, res) {
       });
     }
 
-    const { fullName, phone, occupation, dob, ssn, referral } = req.body;
+    const {
+      fullName,
+      phone,
+      occupation,
+      dob,
+      ssn,
+      referral,
+    } = req.body;
 
     const db = admin.firestore();
-
     const docRef = db.collection("users").doc(decoded.uid);
     const doc = await docRef.get();
 
+    // 🔐 SANITIZED DATA STRUCTURE
     const data = {
       uid: decoded.uid,
-      email: decoded.email || null,
-      fullName: fullName?.trim() || "",
+      email: decoded.email || "",
+      emailVerified: decoded.email_verified || false,
+
+      fullName: fullName.trim(),
       phone: phone?.trim() || null,
       occupation: occupation?.trim() || null,
       dob: dob?.trim() || null,
-      ssn: ssn?.replace(/\D/g, "") || null,
+
+      // NEVER store raw SSN (important security fix)
+      ssnLast4: ssn
+        ? ssn.replace(/\D/g, "").slice(-4)
+        : null,
+
       referral: referral?.trim() || null,
+
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
+    // 🟡 only set createdAt once
     if (!doc.exists) {
       data.createdAt = admin.firestore.FieldValue.serverTimestamp();
     }
 
+    // 🔥 SAFE WRITE (MERGE ONLY)
     await docRef.set(data, { merge: true });
 
     return res.status(200).json({
@@ -110,7 +139,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Internal server error",
     });
   }
 }
