@@ -27,7 +27,7 @@ export default function Navbar() {
 
 const styles = {
   header: {
-    position: 'sticky',
+    position: 'sticky' as const,
     top: 0,
     zIndex: 100,
     background: 'rgba(8, 17, 32, 0.92)',
@@ -42,7 +42,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: '16px',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap' as const,
   },
   brandWrap: {
     display: 'flex',
@@ -78,7 +78,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap' as const,
   },
   navLink: {
     color: '#dce7f3',
