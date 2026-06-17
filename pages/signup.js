@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signup } from "../services/auth";
 
 export default function Signup() {
+  const router = useRouter();
+
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -24,7 +27,8 @@ export default function Signup() {
   const validate = () => {
     if (!form.fullName.trim()) return "Full name is required";
     if (!form.email.includes("@")) return "Enter a valid email";
-    if (form.password.length < 6) return "Password must be at least 6 characters";
+    if (form.password.length < 6)
+      return "Password must be at least 6 characters";
     return null;
   };
 
@@ -42,15 +46,19 @@ export default function Signup() {
 
     try {
       const result = await signup(
-        form.email.trim(),
+        form.email.trim().toLowerCase(),
         form.password.trim()
       );
 
-      if (!result.success) {
-        throw new Error(result.message || "Signup failed");
+      if (!result?.success) {
+        throw new Error(result?.message || "Signup failed");
       }
 
       const token = result.token;
+
+      if (!token) {
+        throw new Error("Authentication token missing");
+      }
 
       const res = await fetch("/api/user/create-profile", {
         method: "POST",
@@ -66,7 +74,12 @@ export default function Signup() {
         }),
       });
 
-      const data = await res.json().catch(() => null);
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
+      }
 
       if (!res.ok || !data?.success) {
         throw new Error(data?.message || "Profile creation failed");
@@ -74,12 +87,10 @@ export default function Signup() {
 
       setSuccess(true);
 
-      // IMPORTANT FLOW:
-      // After signup → user should verify email → then login
+      // clean redirect after success
       setTimeout(() => {
-        window.location.href = "/check-email";
-      }, 1500);
-
+        router.push("/check-email");
+      }, 1200);
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -90,8 +101,8 @@ export default function Signup() {
   if (success) {
     return (
       <div style={styles.successBox}>
-        <h2>Account created successfully</h2>
-        <p>Please verify your email to continue.</p>
+        <h2>Account Created Successfully</h2>
+        <p>Redirecting you to email verification...</p>
       </div>
     );
   }
@@ -152,7 +163,15 @@ export default function Signup() {
 
         {error && <p style={styles.error}>{error}</p>}
 
-        <button type="submit" disabled={loading} style={styles.button}>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            ...styles.button,
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
           {loading ? "Creating Account..." : "Sign Up"}
         </button>
       </form>
@@ -167,6 +186,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     background: "#0f172a",
+    padding: "20px",
   },
   form: {
     width: "100%",
@@ -188,6 +208,7 @@ const styles = {
     border: "1px solid #334155",
     background: "#0b1220",
     color: "white",
+    outline: "none",
   },
   button: {
     padding: "12px",
@@ -195,7 +216,6 @@ const styles = {
     border: "none",
     background: "#3b82f6",
     color: "white",
-    cursor: "pointer",
     fontWeight: "bold",
   },
   error: {
