@@ -1,8 +1,5 @@
-Copy and paste this entire block into `tools/finance/page.jsx`:
-
-```jsx
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const CDN = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js";
 
@@ -123,13 +120,6 @@ function toggleStyle(active, accent) {
 
 const statsGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 0 };
 
-function gridStyle() {
-  if (typeof window !== "undefined" && window.innerWidth < 768) {
-    return { display: "grid", gridTemplateColumns: "1fr", gap: 20 };
-  }
-  return { display: "grid", gridTemplateColumns: "clamp(300px,35%,380px) 1fr", gap: 20, alignItems: "start" };
-}
-
 // ── RETIREMENT TAB
 function RetirementTab() {
   const [age,  setAge]  = useState(30);
@@ -177,7 +167,7 @@ function RetirementTab() {
   }, [age, ret, bal, sal, cPct, mPct, rate]);
 
   return (
-    <div style={gridStyle()}>
+    <div className="sm-finance-grid">
       <Card title="Your Parameters">
         <Slider label="Current Age"          min={18} max={65}     value={age}  onChange={setAge}  suffix="" />
         <Slider label="Retirement Age"       min={50} max={80}     value={ret}  onChange={setRet}  suffix="" />
@@ -250,7 +240,7 @@ function TaxTab() {
   ];
 
   return (
-    <div style={gridStyle()}>
+    <div className="sm-finance-grid">
       <Card title="Income & Filing Details">
         <Slider label="Annual Gross Income" min={10000} max={500000} step={1000} value={income} onChange={setIncome} prefix="$" color="purple" />
         <div style={{ marginBottom: 16 }}>
@@ -288,7 +278,7 @@ function TaxTab() {
             const pct = income > 0 ? Math.min(item.v / income * 100, 100) : 0;
             return (
               <div key={item.label} style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
+                <div style={{ display: "flex", justifyBetween: "space-between", fontSize: 12, marginBottom: 5 }}>
                   <span style={{ color: "#6b7394" }}>{item.label}</span>
                   <span style={{ fontFamily: "monospace", fontSize: 12 }}>{fmt(item.v)}</span>
                 </div>
@@ -345,7 +335,7 @@ function SalaryTab() {
   const perDay = outs.hourly ? outs.hourly * (hours / 5) : 0;
 
   return (
-    <div style={gridStyle()}>
+    <div className="sm-finance-grid">
       <Card title="Income Sources">
         <Slider label="Gross Annual Salary"          min={20000} max={500000} step={1000} value={salary}  onChange={setSalary}  prefix="$" color="gold" />
         <Slider label="Hours Worked / Week"          min={20}    max={80}               value={hours}   onChange={setHours}   suffix=" hrs" color="gold" />
@@ -422,7 +412,7 @@ function FuturesTab() {
   }, [nw, savings, years, inflation]);
 
   return (
-    <div style={gridStyle()}>
+    <div className="sm-finance-grid">
       <Card title="Your Starting Point">
         <Slider label="Current Net Worth"     min={0}   max={1000000} step={1000} value={nw}        onChange={setNw}        prefix="$" color="red" />
         <Slider label="Monthly Savings"       min={0}   max={10000}   step={50}   value={savings}   onChange={setSavings}   prefix="$" color="red" />
@@ -498,6 +488,20 @@ export default function FinancePage() {
 
   return (
     <div style={{ background: "#0a0b0f", minHeight: "100vh", color: "#e8eaf0", fontFamily: "inherit" }}>
+      {/* Dynamic CSS Grid Inject to Bypass Next.js Hydration Errors */}
+      <style>{`
+        .sm-finance-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 20px;
+          align-items: start;
+        }
+        @media (min-width: 768px) {
+          .sm-finance-grid {
+            grid-template-columns: clamp(300px, 35%, 380px) 1fr;
+          }
+        }
+      `}</style>
 
       {/* Hero */}
       <div style={{ padding: "48px 32px 32px", borderBottom: "1px solid #1e2130", maxWidth: 1200, margin: "0 auto" }}>
@@ -544,6 +548,3 @@ export default function FinancePage() {
     </div>
   );
 }
-```
-
-That's the complete file — paste it all, commit, and you're done. Then go update `Navbar.js` with the Finance Tools link as the final step.
