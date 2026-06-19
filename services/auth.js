@@ -1,4 +1,4 @@
-import { auth } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   reload,
 } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 /**
  * LOGIN
@@ -101,10 +102,26 @@ export async function logout() {
 
 /**
  * GET CURRENT USER
+ *
+ * Firebase's auth state is restored asynchronously on page load.
+ * Reading `auth.currentUser` immediately after a refresh can return
+ * null even when the user IS logged in, because Firebase hasn't
+ * finished rehydrating the session yet. This waits for that first
+ * state event before deciding the user is logged out.
+ *
+ * It also pulls the user's Firestore profile doc (users/{uid}) so
+ * fields like `subscription.tier` are actually available — the old
+ * version only ever returned uid/email/emailVerified, which is why
+ * tier always fell back to "free".
  */
 export async function getUser() {
   try {
-    const user = auth.currentUser;
+    const user = await new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        unsubscribe();
+        resolve(firebaseUser);
+      });
+    });
 
     if (!user) {
       return {
@@ -115,7 +132,27 @@ export async function getUser() {
 
     await reload(user);
 
+    if (!user.emailVerified) {
+      return {
+        success: false,
+        message: "Email not verified. Please check your inbox.",
+      };
+    }
+
     const token = await user.getIdToken(true);
+
+    // Pull the Firestore profile so subscription/tier data is included.
+    let profile = {};
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) {
+        profile = snap.data();
+      }
+    } catch (profileErr) {
+      // Don't fail the whole getUser() call if the profile read fails —
+      // the user is still authenticated, just without extra profile data.
+      console.error("Failed to load user profile:", profileErr);
+    }
 
     return {
       success: true,
@@ -124,6 +161,7 @@ export async function getUser() {
         uid: user.uid,
         email: user.email,
         emailVerified: user.emailVerified,
+        ...profile,
       },
     };
   } catch (err) {
