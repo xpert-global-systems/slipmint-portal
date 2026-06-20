@@ -120,9 +120,13 @@ export default async function handler(req, res) {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // 🟡 only set createdAt once
+    // 🟡 only set createdAt + default subscription once
     if (!doc.exists) {
       data.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      data.subscription = {
+        tier: "free",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
     }
 
     // 🔥 SAFE WRITE (MERGE ONLY)
