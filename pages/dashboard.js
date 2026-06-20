@@ -486,7 +486,7 @@ export default function Dashboard() {
       return;
     }
 
-    getUser(token)
+    getUser()
       .then((data) => {
         if (!data || !data.success) {
           localStorage.removeItem("token");
