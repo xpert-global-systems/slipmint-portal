@@ -1,25 +1,38 @@
 // pages/api/ai.js
-// Claude-powered SlipMint assistant with tool calling:
+// SlipMint assistant with tool calling, primary: Claude, fallback: Gemini.
 // crypto prices (CoinGecko), market/forex news (cryptonews-api), invoice drafting, trading checklists.
 
-const SYSTEM_PROMPT = `You are the SlipMint AI Assistant, embedded on luckmanworld.icu — a crypto infrastructure platform built on research, transparency, and disciplined trading.
+const SYSTEM_PROMPT = `You are the SlipMint AI Assistant, embedded on luckmanworld.icu — a crypto and forex infrastructure platform built on research, transparency, and disciplined trading. Founded by Hassan Luckman.
 
-About SlipMint:
-- Founder Vault: premium membership with private research notes and strategy
-- Free tier: weekly research + market commentary
-- Telegram: @slipmintsignals for signal alerts
-- Partner platforms: Gate.io and Exness (affiliate links on site)
-- Brand voice: disciplined, structured, no hype, risk-aware
+ABOUT SLIPMINT
+- SlipMint is a crypto/DeFi platform (Next.js, Firebase, Supabase, Base Network) offering research, portfolio tooling, and a disciplined-trading philosophy — not a signals-for-hire shop and not a financial advisor.
+- Brand voice: disciplined, structured, no hype, risk-aware. Never promotional or "to the moon" language.
 
-Your job:
-- Answer questions about crypto/forex markets using live data when relevant (use tools, don't guess prices)
-- Help visitors understand Founder Vault and how SlipMint's research works
-- Draft invoices/payment requests when asked (Founder Vault billing, signal subscriptions, etc.)
-- Draft trading checklists (pre-flight checks, risk checks) in the spirit of disciplined trading
-- Never give direct financial advice ("buy now", "guaranteed returns") — frame things as research, structure, and risk management, consistent with the SlipMint brand
-- Keep replies concise and chat-friendly (this renders in a small floating widget), not long essays
+PRODUCTS & TIERS
+- Founder Vault (on Whop): the premium membership product for forex and gold (XAUUSD) traders. Pricing: [FILL IN — e.g. "$49/month" or tiered pricing]. If you don't know current pricing, say "check the Whop page for current pricing" rather than guessing. Includes private research notes, structured strategy breakdowns, and the Trading Discipline Toolkit:
+  - Position Size Calculator
+  - Risk/Reward Calculator
+  - Pre-Flight Checklist
+  - Revenge Trade Lockout Timer
+  - Trade Journal
+- Free tier: weekly research + general market commentary, lower-frequency and less detailed than Founder Vault.
+- Telegram (@slipmintsignals or SlipMint's channel): primary distribution channel for forex trading signal alerts and educational posts for intermediate forex traders.
+- Affiliate partners: Gate.io (crypto exchange) and Exness (forex broker) — SlipMint is an approved affiliate for both; affiliate links live on the site.
 
-If a user asks for live prices or news, ALWAYS use the tools rather than relying on your own knowledge — prices and news move fast and your training data is outdated.`;
+COMPLIANCE & RISK DISCLAIMERS (ALWAYS FOLLOW)
+- Never give direct financial advice — no "buy now," "this will go up," "guaranteed returns," or specific entry/exit calls presented as certainty.
+- Frame all market commentary as research, education, and risk management, not instructions to trade.
+- When discussing signals or Founder Vault, be clear these are educational/research tools, not a guarantee of profit. Trading carries risk of loss.
+- If a user asks for something that sounds like "tell me what to buy" or "guarantee I'll make money," redirect to risk management and encourage them to do their own due diligence.
+
+YOUR JOB
+- Answer questions about crypto/forex markets using live data when relevant (use tools, don't guess prices — your training data is outdated for fast-moving prices/news).
+- Help visitors understand Founder Vault, the Trading Discipline Toolkit, and how SlipMint's research works.
+- Draft invoices/payment requests when asked (Founder Vault billing, signal subscriptions, etc.).
+- Draft trading checklists (pre-flight checks, risk checks) in the spirit of disciplined trading.
+- Keep replies concise and chat-friendly (this renders in a small floating widget) — short paragraphs or brief lists, not long essays.
+
+If a user asks for live prices or news, ALWAYS use the tools rather than relying on your own knowledge.`;
 
 const TOOLS = [
   {
@@ -163,6 +176,7 @@ async function callClaude(messages) {
       tools: TOOLS,
       messages,
     }),
+    signal: AbortSignal.timeout(15000),
   });
 
   if (!res.ok) {
@@ -171,6 +185,132 @@ async function callClaude(messages) {
   }
 
   return res.json();
+}
+
+// ---- Gemini fallback ----
+// Converts Claude-style { role, content } messages into Gemini's { role, parts } format,
+// and Claude-style tool_use/tool_result blocks into Gemini's functionCall/functionResponse parts.
+// Returns a response already normalized into Claude's shape ({ content: [...], stop_reason })
+// so the rest of the handler (the tool-use loop, text extraction) doesn't need to know which
+// provider answered.
+
+function claudeToolsToGemini(tools) {
+  return [
+    {
+      function_declarations: tools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        parameters: t.input_schema,
+      })),
+    },
+  ];
+}
+
+function claudeMessagesToGemini(messages) {
+  const contents = [];
+  for (const m of messages) {
+    if (typeof m.content === "string") {
+      contents.push({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      });
+      continue;
+    }
+    // content is an array of blocks (text, tool_use, or tool_result)
+    const parts = [];
+    for (const block of m.content) {
+      if (block.type === "text") {
+        parts.push({ text: block.text });
+      } else if (block.type === "tool_use") {
+        parts.push({ functionCall: { name: block.name, args: block.input } });
+      } else if (block.type === "tool_result") {
+        let responseObj;
+        try {
+          responseObj = JSON.parse(block.content);
+        } catch {
+          responseObj = { result: block.content };
+        }
+        parts.push({
+          functionResponse: {
+            name: block.tool_use_id || "tool_result",
+            response: responseObj,
+          },
+        });
+      }
+    }
+    contents.push({ role: m.role === "assistant" ? "model" : "user", parts });
+  }
+  return contents;
+}
+
+async function callGemini(messages) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
+
+  const body = {
+    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: claudeMessagesToGemini(messages),
+    tools: claudeToolsToGemini(TOOLS),
+    generationConfig: { maxOutputTokens: 1024 },
+  };
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini API error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  const candidate = data.candidates?.[0];
+  const geminiParts = candidate?.content?.parts || [];
+
+  // Normalize into Claude's response shape so the caller's tool-use loop works unmodified.
+  const content = geminiParts.map((p) => {
+    if (p.functionCall) {
+      return {
+        type: "tool_use",
+        id: `gemini_${p.functionCall.name}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        name: p.functionCall.name,
+        input: p.functionCall.args || {},
+      };
+    }
+    return { type: "text", text: p.text || "" };
+  });
+
+  const hasFunctionCall = content.some((b) => b.type === "tool_use");
+
+  return {
+    content,
+    stop_reason: hasFunctionCall ? "tool_use" : "end_turn",
+  };
+}
+
+// Tries Claude first; on any failure (missing key, timeout, rate limit, 5xx), falls back to Gemini.
+async function callModel(messages) {
+  try {
+    return await callClaude(messages);
+  } catch (claudeErr) {
+    console.error("[ai.js] Claude failed, falling back to Gemini:", claudeErr.message);
+    try {
+      return await callGemini(messages);
+    } catch (geminiErr) {
+      console.error("[ai.js] Gemini fallback also failed:", geminiErr.message);
+      throw new Error(
+        `Both providers failed. Claude: ${claudeErr.message} | Gemini: ${geminiErr.message}`
+      );
+    }
+  }
 }
 
 export default async function handler(req, res) {
@@ -194,7 +334,7 @@ export default async function handler(req, res) {
 
     let messages = [...priorMessages, { role: "user", content: message }];
 
-    let data = await callClaude(messages);
+    let data = await callModel(messages);
     let loopCount = 0;
 
     while (data.stop_reason === "tool_use" && loopCount < 4) {
@@ -227,7 +367,7 @@ export default async function handler(req, res) {
         { role: "user", content: toolResults },
       ];
 
-      data = await callClaude(messages);
+      data = await callModel(messages);
     }
 
     const textBlocks = (data.content || []).filter((b) => b.type === "text");
