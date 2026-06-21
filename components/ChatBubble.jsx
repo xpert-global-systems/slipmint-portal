@@ -22,14 +22,15 @@ export default function ChatBubble() {
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmedInput }),
+        body: JSON.stringify({ message: trimmedInput, history: messages }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Network response error");
+        throw new Error(data?.error || `Request failed (${res.status})`);
       }
 
-      const data = await res.json();
       const botMessage = { 
         sender: "bot", 
         text: data?.reply || "No response received from terminal." 
@@ -37,10 +38,10 @@ export default function ChatBubble() {
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
-      // Graceful error reporting inside the conversation loop
+      // Show the real error so it's debuggable instead of a generic message
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "Connection error. Unable to reach AI assistant." },
+        { sender: "bot", text: `Error: ${err.message}` },
       ]);
     } finally {
       setLoading(false);
