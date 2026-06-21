@@ -32,6 +32,14 @@ YOUR JOB
 - Draft trading checklists (pre-flight checks, risk checks) in the spirit of disciplined trading.
 - Keep replies concise and chat-friendly (this renders in a small floating widget) — short paragraphs or brief lists, not long essays.
 
+GUIDED RECOMMENDATIONS (concierge behavior)
+When a user describes their situation (experience level, goals, what they're struggling with, risk tolerance), use that to recommend the right SlipMint resource — not a trade.
+- If they're new to trading or ask basic concept questions → recommend free-tier educational content, explain a concept directly, or suggest the relevant SlipMint tool (e.g. Pre-Flight Checklist for someone who says they keep entering trades impulsively).
+- If they describe a specific recurring problem (overleveraging, revenge trading, no journal discipline, unclear risk/reward) → recommend the specific Trading Discipline Toolkit item built for that problem, and explain briefly why it fits.
+- If they're an active/intermediate trader wanting deeper research or signals → recommend Founder Vault or the Telegram channel, as appropriate.
+- Always ask 1 clarifying question if their goal or experience level is unclear, rather than guessing — e.g. "Are you looking for live signals, or more for the risk-management side of things?"
+- This is product/education routing, NOT trade advice. Never let "based on our conversation" become "based on our conversation, buy/sell X." The line is: you can recommend a TOOL or RESOURCE based on what they tell you; you cannot recommend a TRADE, ENTRY, or ASSET ALLOCATION based on what they tell you. If a user pushes for the latter, restate that clearly and redirect to the risk-management tools instead.
+
 If a user asks for live prices or news, ALWAYS use the tools rather than relying on your own knowledge.`;
 
 const TOOLS = [
@@ -91,6 +99,32 @@ const TOOLS = [
       required: ["instrument"],
     },
   },
+  {
+    name: "recommend_resource",
+    description: "Recommend a specific SlipMint product, tool, or educational resource based on what the user has described about their experience level, goals, or trading struggles. Use this when a user describes their situation and you want to point them somewhere specific. Do NOT use this to suggest trades, entries, or asset allocations — only products/tools/education.",
+    input_schema: {
+      type: "object",
+      properties: {
+        user_situation: { type: "string", description: "Brief summary of what the user described, e.g. 'new trader, keeps overleveraging' or 'wants live forex signals'" },
+        recommendation: {
+          type: "string",
+          enum: [
+            "Position Size Calculator",
+            "Risk/Reward Calculator",
+            "Pre-Flight Checklist",
+            "Revenge Trade Lockout Timer",
+            "Trade Journal",
+            "Founder Vault",
+            "Free weekly research",
+            "Telegram signal channel",
+          ],
+          description: "Which SlipMint resource best fits the user's situation",
+        },
+        reason: { type: "string", description: "One short sentence on why this fits their situation" },
+      },
+      required: ["user_situation", "recommendation", "reason"],
+    },
+  },
 ];
 
 async function getCryptoPrice(coinIds) {
@@ -141,6 +175,16 @@ function draftInvoice({ client_name, item_description, amount, due_date, notes }
   return { invoice_text: lines.join("\n") };
 }
 
+function recommendResource({ user_situation, recommendation, reason }) {
+  return {
+    acknowledged: true,
+    user_situation,
+    recommendation,
+    reason,
+    note: "This is a product/education recommendation only — not trade advice.",
+  };
+}
+
 async function executeTool(name, input) {
   switch (name) {
     case "get_crypto_price":
@@ -151,6 +195,8 @@ async function executeTool(name, input) {
       return draftInvoice(input);
     case "draft_trading_checklist":
       return { acknowledged: true, instrument: input.instrument, trade_type: input.trade_type || null, focus: input.focus || null };
+    case "recommend_resource":
+      return recommendResource(input);
     default:
       return { error: `Unknown tool: ${name}` };
   }
