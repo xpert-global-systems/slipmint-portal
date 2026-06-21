@@ -95,14 +95,26 @@ export default function ChatBubble() {
 
           {/* Prompt Entry Box */}
           <div style={styles.inputArea}>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={loading}
-              placeholder={loading ? "Waiting for response..." : "Ask me anything..."}
-              style={styles.input}
-            />
+            <div style={styles.inputRow}>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                disabled={loading}
+                placeholder={loading ? "Waiting for response..." : "Ask me anything..."}
+                style={styles.input}
+              />
+              <button
+                onClick={sendMessage}
+                disabled={loading || !input.trim()}
+                style={{
+                  ...styles.sendButton,
+                  opacity: loading || !input.trim() ? 0.5 : 1,
+                }}
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -192,8 +204,13 @@ const styles = {
     borderTop: "1px solid #334155",
     background: "#0f172a",
   },
+  inputRow: {
+    display: "flex",
+    gap: "8px",
+    alignItems: "center",
+  },
   input: {
-    width: "100%",
+    flex: 1,
     padding: "10px 12px",
     borderRadius: "8px",
     border: "1px solid #334155",
@@ -201,5 +218,17 @@ const styles = {
     color: "white",
     outline: "none",
     boxSizing: "border-box",
+    minWidth: 0,
+  },
+  sendButton: {
+    flexShrink: 0,
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "none",
+    background: "#3b82f6",
+    color: "white",
+    fontWeight: "600",
+    fontSize: "14px",
+    cursor: "pointer",
   },
 };
