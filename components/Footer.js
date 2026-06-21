@@ -15,6 +15,10 @@ export default function Footer() {
           <Link href="/research" style={styles.link}>Research</Link>
           <Link href="/vault" style={styles.link}>Founder Vault</Link>
           <Link href="/faq" style={styles.link}>FAQ</Link>
+          <Link href="/about" style={styles.link}>About</Link>
+          <Link href="/contact" style={styles.link}>Contact</Link>
+          <Link href="/privacy-policy" style={styles.link}>Privacy Policy</Link>
+          <Link href="/terms" style={styles.link}>Terms of Service</Link>
         </div>
       </div>
 
