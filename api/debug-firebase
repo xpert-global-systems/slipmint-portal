@@ -3,29 +3,63 @@ import { getFirestore } from "firebase-admin/firestore"
 
 export default async function handler(req, res) {
   try {
+    // =========================
+    // 1. ENV DIAGNOSTICS
+    // =========================
+    const projectId = process.env.FIREBASE_PROJECT_ID
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY
+
+    console.log("ENV CHECK:", {
+      projectId: !!projectId,
+      clientEmail: !!clientEmail,
+      privateKey: !!privateKey,
+    })
+
+    if (!projectId || !clientEmail || !privateKey) {
+      return res.status(200).json({
+        stage: "ENV_MISSING",
+        projectId: !!projectId,
+        clientEmail: !!clientEmail,
+        privateKey: !!privateKey,
+      })
+    }
+
+    // =========================
+    // 2. FIREBASE INIT
+    // =========================
+    console.log("getApps type:", typeof getApps)
+
     const app =
       getApps().length === 0
         ? initializeApp({
             credential: cert({
-              projectId: process.env.FIREBASE_PROJECT_ID,
-              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-              privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+              projectId,
+              clientEmail,
+              privateKey: privateKey.replace(/\\n/g, "\n"),
             }),
           })
         : getApps()[0]
 
-    console.log("Apps:", getApps().length)
+    console.log("Apps count:", getApps().length)
 
+    // =========================
+    // 3. FIRESTORE TEST
+    // =========================
     const db = getFirestore(app)
+
     const snap = await db.collection("_test").limit(1).get()
 
-    res.json({
-      ok: true,
+    return res.status(200).json({
+      stage: "SUCCESS",
+      apps: getApps().length,
       empty: snap.empty,
     })
   } catch (e) {
-    console.error(e)
-    res.status(500).json({
+    console.error("FIREBASE TEST ERROR:", e)
+
+    return res.status(500).json({
+      stage: "FAILED",
       error: e.message,
       stack: e.stack,
     })
