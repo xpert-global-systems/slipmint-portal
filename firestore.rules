@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// SlipMint Firestore security rules.
+//
+// WHY THIS FILE MATTERS:
+// vault.js checks `subscription.tier` in React before rendering content, but
+// that's a UI convenience, not a security boundary. Without rules like these,
+// anyone with a free Firebase account (or just the browser console) can call
+// the Firestore client SDK directly and read `vaultContent` regardless of
+// whether they ever paid. These rules make the paywall real by enforcing the
+// check at the database layer.
+//
+// HOW TO APPLY:
+// Firebase Console -> Firestore Database -> Rules tab -> paste this -> Publish.
+// (Or, if you set up the Firebase CLI later: `firebase deploy --only firestore:rules`.)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function hasFounderAccess() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.subscription.tier == "founder";
+    }
+
+    // Users can read their own profile (needed for the tier check in vault.js
+    // and services/auth.js). All writes happen server-side via the Admin SDK
+    // in /api/subscribe, /api/verify-payment, and /api/paystack-webhook —
+    // those bypass these rules entirely, so client writes are denied here.
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Vault content is readable only by signed-in users whose subscription
+    // tier is "founder", and only published entries. Authoring happens
+    // through /api/admin/vault-content (Admin SDK, ADMIN_API_KEY-gated),
+    // which also bypasses these rules — so client writes are denied here too.
+    match /vaultContent/{docId} {
+      allow read: if hasFounderAccess() && resource.data.published == true;
+      allow write: if false;
+    }
+
+    // Internal — written only by the webhook (Admin SDK), read only via the
+    // admin API. No client access at all.
+    match /unmatchedPayments/{docId} {
+      allow read, write: if false;
+    }
+
+    // Default deny for anything not explicitly listed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
