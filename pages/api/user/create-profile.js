@@ -68,13 +68,10 @@ export default async function handler(req, res) {
     // 🔐 VERIFY TOKEN
     const decoded = await admin.auth().verifyIdToken(token);
 
-    // 🚨 BLOCK UNVERIFIED EMAIL USERS
-    if (!decoded.email_verified) {
-      return res.status(403).json({
-        success: false,
-        message: "Email not verified",
-      });
-    }
+    // NOTE: Email verification is NOT checked here intentionally.
+    // Profile must be created immediately after signup, before the
+    // user has a chance to verify their email. Verification is
+    // enforced at login time in services/auth.js instead.
 
     const errors = validateInput(req.body);
 
@@ -110,7 +107,7 @@ export default async function handler(req, res) {
       occupation: occupation?.trim() || null,
       dob: dob?.trim() || null,
 
-      // NEVER store raw SSN (important security fix)
+      // NEVER store raw SSN
       ssnLast4: ssn
         ? ssn.replace(/\D/g, "").slice(-4)
         : null,
