@@ -4,21 +4,12 @@ import Layout from "../components/Layout";
 import Link from "next/link";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, getDocs } from "firebase/firestore";
 
-const vaultItems = [
-  {
-    title: "Founder Notes",
-    summary: "Private thinking, strategy notes, and structured crypto observations.",
-  },
-  {
-    title: "Premium Research",
-    summary: "Deeper market breakdowns and higher-conviction research pieces.",
-  },
-  {
-    title: "Strategic Watchlist",
-    summary: "A curated view of themes, narratives, and assets worth monitoring.",
-  },
+const CATEGORIES = [
+  { value: "founder_notes", label: "Founder Notes" },
+  { value: "premium_research", label: "Premium Research" },
+  { value: "watchlist", label: "Strategic Watchlist" },
 ];
 
 export default function Vault() {
@@ -29,6 +20,27 @@ export default function Vault() {
   const [subscribing, setSubscribing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
+  const [content, setContent] = useState([]);
+  const [loadingContent, setLoadingContent] = useState(false);
+
+  // Once access is confirmed, load the real vault content (gated server-side
+  // by Firestore security rules, not just this client-side check — see
+  // firestore.rules in the repo root).
+  useEffect(() => {
+    if (!hasAccess) return;
+
+    setLoadingContent(true);
+    const q = query(
+      collection(db, "vaultContent"),
+      where("published", "==", true),
+      orderBy("createdAt", "desc")
+    );
+
+    getDocs(q)
+      .then((snap) => setContent(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
+      .catch((err) => console.error("Failed to load vault content:", err))
+      .finally(() => setLoadingContent(false));
+  }, [hasAccess]);
 
   // Track auth state and look up subscription tier
   useEffect(() => {
@@ -163,13 +175,34 @@ export default function Vault() {
               </div>
             </div>
           ) : (
-            <div style={styles.grid}>
-              {vaultItems.map((item, index) => (
-                <article key={index} style={styles.card}>
-                  <h2 style={styles.cardTitle}>{item.title}</h2>
-                  <p style={styles.cardText}>{item.summary}</p>
-                </article>
-              ))}
+            <div>
+              {loadingContent && <p style={styles.lockedText}>Loading vault content...</p>}
+
+              {!loadingContent && content.length === 0 && (
+                <div style={styles.lockedCard}>
+                  <p style={styles.lockedText}>
+                    New research and notes are added regularly — check back soon.
+                  </p>
+                </div>
+              )}
+
+              {CATEGORIES.map((cat) => {
+                const items = content.filter((c) => c.category === cat.value);
+                if (items.length === 0) return null;
+                return (
+                  <div key={cat.value} style={{ marginBottom: "40px" }}>
+                    <h2 style={styles.sectionTitle}>{cat.label}</h2>
+                    <div style={styles.grid}>
+                      {items.map((item) => (
+                        <article key={item.id} style={styles.card}>
+                          <h3 style={styles.cardTitle}>{item.title}</h3>
+                          <p style={styles.cardText}>{item.body}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -271,5 +304,12 @@ const styles = {
     margin: 0,
     color: "#b8c7d9",
     lineHeight: 1.6,
+    whiteSpace: "pre-wrap",
+  },
+  sectionTitle: {
+    fontSize: "20px",
+    fontWeight: 700,
+    margin: "0 0 18px",
+    color: "#ffffff",
   },
 };
