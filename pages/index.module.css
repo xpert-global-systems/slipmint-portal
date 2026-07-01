@@ -53,6 +53,12 @@
   color: #0f1b2d;
   font-weight: 700;
   text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 232, 122, 0.3);
 }
 
 .secondaryButton {
@@ -63,6 +69,12 @@
   color: #00e87a;
   font-weight: 700;
   text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.secondaryButton:hover {
+  background: rgba(0, 232, 122, 0.1);
+  transform: translateY(-2px);
 }
 
 .telegramButton {
@@ -72,6 +84,12 @@
   color: white;
   font-weight: 700;
   text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.telegramButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 158, 217, 0.3);
 }
 
 /* ========================= */
@@ -141,6 +159,12 @@
   padding: 24px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s ease;
+}
+
+.featureCard:hover {
+  border-color: #00e87a;
+  transform: translateY(-4px);
 }
 
 .featureIcon {
@@ -173,6 +197,12 @@
   border: 1px solid rgba(255,255,255,0.08);
   font-size: 15px;
   color: #e8eaf0;
+  transition: all 0.3s ease;
+}
+
+.testimonialCard:hover {
+  border-color: #00e87a;
+  transform: translateY(-4px);
 }
 
 .testimonialCard span {
@@ -206,39 +236,17 @@
   border-radius: 14px;
   width: 260px;
   border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s ease;
+}
+
+.pricingCard:hover {
+  border-color: #00e87a;
+  transform: translateY(-4px);
 }
 
 .pricingCard h3 {
   color: #00e87a;
   margin-bottom: 10px;
-}
-
-/* ========================= */
-/* AFFILIATES */
-/* ========================= */
-
-.affiliatesSection {
-  max-width: 1100px;
-  margin: auto;
-  padding: 0 20px;
-  text-align: center;
-}
-
-.affiliateLinks {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
-
-.affiliateButton {
-  background: #00e87a;
-  padding: 12px 22px;
-  border-radius: 10px;
-  color: #0f1b2d;
-  font-weight: 700;
-  text-decoration: none;
 }
 
 /* ========================= */
@@ -314,4 +322,56 @@
   font-weight: 700;
   text-decoration: none;
   box-shadow: 0 4px 20px rgba(0,232,122,0.3);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.floatingCTA:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,232,122,0.4);
+}
+
+/* ========================= */
+/* MOBILE RESPONSIVE */
+/* ========================= */
+
+@media (max-width: 768px) {
+  .heroWrapper {
+    padding: 60px 16px;
+  }
+
+  .actions {
+    gap: 12px;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .telegramButton {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .statsGrid {
+    gap: 24px;
+  }
+
+  .statBox h3 {
+    font-size: 24px;
+  }
+
+  .sectionDivider {
+    margin: 40px 0;
+  }
+
+  .pricingCard {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .floatingCTA {
+    bottom: 16px;
+    right: 16px;
+    padding: 12px 16px;
+    font-size: 12px;
+  }
 }
