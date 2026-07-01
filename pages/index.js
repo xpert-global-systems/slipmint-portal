@@ -175,6 +175,54 @@ export default function Home() {
         </div>
       </section>
 
+      <div className={styles.sectionDivider}></div>
+
+      {/* TRADING PARTNERS & RESOURCES */}
+      <section className={`${styles.partnersSection} ${styles.fadeIn}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Ecosystem</span>
+          <h2>Recommended Trading Platforms</h2>
+          <p>Verified partners we use and recommend for execution</p>
+        </div>
+
+        <div className={styles.partnerGrid}>
+          <a 
+            href="https://www.gate.io/share/VQQRBWXZBW" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.partnerCard}
+          >
+            <h3>Gate.io</h3>
+            <p>Spot & futures trading with deep liquidity</p>
+            <span className={styles.partnerCTA}>Open Account →</span>
+          </a>
+
+          <a 
+            href="https://one.exnessonelink.com/a/c_5ufq543auz?platform=mobile" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.partnerCard}
+          >
+            <h3>Exness (Mobile)</h3>
+            <p>Forex & crypto on-the-go trading</p>
+            <span className={styles.partnerCTA}>Download App →</span>
+          </a>
+
+          <a 
+            href="https://one.exnessonelink.com/boarding/sign-up/a/c_5ufq543auz" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.partnerCard}
+          >
+            <h3>Exness (Web)</h3>
+            <p>Desktop platform for advanced traders</p>
+            <span className={styles.partnerCTA}>Trade on Web →</span>
+          </a>
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
       {/* NEWSLETTER */}
       <NewsletterForm />
 
