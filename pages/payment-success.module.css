@@ -137,3 +137,14 @@
   background: rgba(0, 232, 122, 0.1);
   transform: translateY(-2px);
 }
+
+.button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #00e87a;
+  color: #0f1b2d;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  margin-top: 20px;
+}
