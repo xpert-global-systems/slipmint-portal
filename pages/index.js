@@ -154,46 +154,6 @@ export default function Home() {
 
       <div className={styles.sectionDivider}></div>
 
-      {/* AFFILIATES */}
-      <section className={`${styles.affiliatesSection} ${styles.fadeIn}`}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionTag}>Partners</span>
-          <h2>Trusted Trading Platforms</h2>
-          <p>Trade with our verified affiliate partners</p>
-        </div>
-
-        <div className={styles.affiliateLinks}>
-          <a 
-            href="https://www.gate.io/share/VQQRBWXZBW" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.affiliateButton}
-          >
-            Trade on Gate.io
-          </a>
-
-          <a 
-            href="https://one.exnessonelink.com/a/c_5ufq543auz?platform=mobile" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.affiliateButton}
-          >
-            Trade on Exness (Mobile)
-          </a>
-
-          <a 
-            href="https://one.exnessonelink.com/boarding/sign-up/a/c_5ufq543auz" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={styles.affiliateButton}
-          >
-            Trade on Exness (Web)
-          </a>
-        </div>
-      </section>
-
-      <div className={styles.sectionDivider}></div>
-
       {/* LATEST CRYPTO NEWS */}
       <section className={styles.newsSection}>
         <h2 className={styles.newsTitle}>Latest Crypto News</h2>
