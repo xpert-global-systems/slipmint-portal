@@ -1,0 +1,102 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.card h1 {
+  color: white;
+  font-size: 28px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.subtitle {
+  color: #9ca3af;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.formGroup input {
+  padding: 12px;
+  background: #0b1220;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  border-color: #00e87a;
+}
+
+.formGroup input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  background: #7f1d1d;
+  color: #fecaca;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  border-left: 3px solid #ef4444;
+}
+
+.submitButton {
+  padding: 12px;
+  background: #00e87a;
+  color: #0f1b2d;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 232, 122, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
