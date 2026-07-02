@@ -1,0 +1,15 @@
+name: Call Global Build Validator
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  trigger-global-build:
+    # Points to your newly created build file in the central org repo
+    uses: xpert-global-systems/.github/.github/workflows/build-validator.yml@main
+    with:
+      node-version: '20'
+      build-command: 'npm run build' # Tells it to execute your build script
