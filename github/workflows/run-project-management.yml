@@ -1,0 +1,15 @@
+name: Call Global Project Management
+
+on:
+  pull_request:
+    types: [opened, reopened]
+  issues:
+    types: [opened]
+
+jobs:
+  call-central-pm:
+    # Points directly to the project management workflow in your central repo
+    uses: xpert-global-systems/.github/.github/workflows/project-management.yml@main
+    permissions:
+      issues: write
+      pull-requests: write
