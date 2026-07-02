@@ -1,0 +1,13 @@
+name: Call Global API Monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Checks every 30 minutes
+  workflow_dispatch: # Allows you to manually test it
+
+jobs:
+  call-central-api-check:
+    # Points directly to the API monitoring workflow in your central repo
+    uses: xpert-global-systems/.github/.github/workflows/api-monitor.yml@main
+    permissions:
+      issues: write
