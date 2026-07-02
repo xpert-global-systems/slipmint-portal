@@ -1,0 +1,19 @@
+name: Call Org Organizer
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  run-global-workflow:
+    # Syntax: org-name/central-repo-name/.github/workflows/filename.yml@branch
+    uses: xpert-global-systems/.github/.github/workflows/global-organizer.yml@main
+    with:
+      lint-command: 'npm run lint' # Tailor the lint script per project if needed
+      run-cleanup: true
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
