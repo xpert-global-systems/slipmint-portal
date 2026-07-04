@@ -1,0 +1,96 @@
+// slipmint-portal/lib/gate-market-data.js
+//
+// Read-only Gate.io Spot market data helper for SlipMint.
+// No API key or secret required — these are all public endpoints.
+// Docs: https://www.gate.com/docs/developers/apiv4/en/
+
+const GATE_BASE_URL = "https://api.gateio.ws/api/v4";
+
+/**
+ * Fetch ticker(s) for one or all spot pairs.
+ * @param {string} [currencyPair] e.g. "BTC_USDT". Omit to get all pairs.
+ * @returns {Promise<Array>} ticker objects: { currency_pair, last, low_24h, high_24h,
+ *   change_percentage, base_volume, quote_volume, ... }
+ */
+export async function getTickers(currencyPair) {
+  const url = new URL(`${GATE_BASE_URL}/spot/tickers`);
+  if (currencyPair) url.searchParams.set("currency_pair", currencyPair);
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) {
+    throw new Error(`Gate.io tickers request failed: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+/**
+ * Fetch OHLCV candlesticks for a pair.
+ * @param {string} currencyPair e.g. "BTC_USDT"
+ * @param {object} [opts]
+ * @param {string} [opts.interval="15m"] e.g. "1m","5m","15m","1h","4h","1d"
+ * @param {number} [opts.limit=100] max recent points (max 1000; conflicts with from/to)
+ * @returns {Promise<Array<Array<string>>>} rows of
+ *   [timestamp, quote_volume, close, high, low, open, base_volume]
+ */
+export async function getCandlesticks(currencyPair, opts = {}) {
+  const { interval = "15m", limit = 100 } = opts;
+  const url = new URL(`${GATE_BASE_URL}/spot/candlesticks`);
+  url.searchParams.set("currency_pair", currencyPair);
+  url.searchParams.set("interval", interval);
+  url.searchParams.set("limit", String(limit));
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) {
+    throw new Error(`Gate.io candlesticks request failed: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+/**
+ * Fetch current order book depth for a pair.
+ * @param {string} currencyPair e.g. "BTC_USDT"
+ * @param {number} [limit=10] depth per side (max 100)
+ */
+export async function getOrderBook(currencyPair, limit = 10) {
+  const url = new URL(`${GATE_BASE_URL}/spot/order_book`);
+  url.searchParams.set("currency_pair", currencyPair);
+  url.searchParams.set("limit", String(limit));
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) {
+    throw new Error(`Gate.io order book request failed: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+/**
+ * Convenience: shape a raw candlestick response into readable objects.
+ */
+export function parseCandlesticks(rows) {
+  return rows.map(([ts, quoteVol, close, high, low, open, baseVol]) => ({
+    time: new Date(Number(ts) * 1000).toISOString(),
+    open: Number(open),
+    high: Number(high),
+    low: Number(low),
+    close: Number(close),
+    baseVolume: Number(baseVol),
+    quoteVolume: Number(quoteVol),
+  }));
+}
+
+/**
+ * Convenience: shape a single ticker into a compact summary object,
+ * useful for feeding into an AI prompt context (e.g. market-brain.js).
+ */
+export function summarizeTicker(ticker) {
+  if (!ticker) return null;
+  return {
+    pair: ticker.currency_pair,
+    lastPrice: Number(ticker.last),
+    changePct24h: Number(ticker.change_percentage),
+    high24h: Number(ticker.high_24h),
+    low24h: Number(ticker.low_24h),
+    baseVolume24h: Number(ticker.base_volume),
+    quoteVolume24h: Number(ticker.quote_volume),
+  };
+}
