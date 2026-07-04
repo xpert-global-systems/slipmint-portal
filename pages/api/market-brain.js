@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { ethers } from "ethers"
+import { getTickers, summarizeTicker } from "../../lib/gate-market-data"
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -51,6 +52,21 @@ export default async function handler(req, res) {
     }
 
     // -----------------------------
+    // 3b. GATE.IO CRYPTO PRICE DATA (read-only, no API key needed)
+    // -----------------------------
+    let priceData = null
+
+    try {
+      const pairs = ["BTC_USDT", "ETH_USDT"]
+      const tickers = await Promise.all(pairs.map((p) => getTickers(p)))
+      priceData = tickers
+        .map((t) => summarizeTicker(Array.isArray(t) ? t[0] : t))
+        .filter(Boolean)
+    } catch (err) {
+      console.log("Gate.io market data failed", err)
+    }
+
+    // -----------------------------
     // 4. BUILD MARKET CONTEXT
     // -----------------------------
     const context = `
@@ -63,6 +79,9 @@ ${JSON.stringify(newsData, null, 2)}
 
 CRYPTO:
 ${JSON.stringify(walletData, null, 2)}
+
+LIVE CRYPTO PRICES (Gate.io):
+${JSON.stringify(priceData, null, 2)}
 
 USER REQUEST:
 ${prompt}
@@ -85,6 +104,7 @@ Return:
       response,
       news: newsData,
       crypto: walletData,
+      prices: priceData,
     })
   } catch (error) {
     return res.status(500).json({
