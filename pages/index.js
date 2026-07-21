@@ -35,7 +35,11 @@ export default function Home() {
 
       {/* ACTION BUTTONS */}
       <div className={styles.actions}>
-        <Link href="/vault" className={styles.primaryButton}>
+        <Link href="/signup" className={styles.primaryButton}>
+          Get Started
+        </Link>
+
+        <Link href="/vault" className={styles.secondaryButton}>
           Explore Founder Vault
         </Link>
 
@@ -227,8 +231,8 @@ export default function Home() {
       <NewsletterForm />
 
       {/* FLOATING CTA */}
-      <a href="/vault" className={styles.floatingCTA}>
-        Access Founder Vault
+      <a href="/signup" className={styles.floatingCTA}>
+        Get Started
       </a>
 
     </Layout>
