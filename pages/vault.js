@@ -1,315 +1,240 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import Layout from "../components/Layout";
-import Link from "next/link";
-import { auth, db } from "../lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from "firebase/firestore";
+"use client";
 
-const CATEGORIES = [
-  { value: "founder_notes", label: "Founder Notes" },
-  { value: "premium_research", label: "Premium Research" },
-  { value: "watchlist", label: "Strategic Watchlist" },
-];
+import Layout from '../components/Layout'
+import Hero from '../components/Hero'
+import NewsletterForm from '../components/NewsletterForm'
+import Link from 'next/link'
+import styles from './index.module.css'
+import { useEffect, useState } from 'react'
 
-export default function Vault() {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [checkingAccess, setCheckingAccess] = useState(true);
-  const [subscribing, setSubscribing] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [error, setError] = useState("");
-  const [content, setContent] = useState([]);
-  const [loadingContent, setLoadingContent] = useState(false);
+export default function Home() {
 
-  // Once access is confirmed, load the real vault content (gated server-side
-  // by Firestore security rules, not just this client-side check — see
-  // firestore.rules in the repo root).
+  const [news, setNews] = useState([]);
+
   useEffect(() => {
-    if (!hasAccess) return;
-
-    setLoadingContent(true);
-    const q = query(
-      collection(db, "vaultContent"),
-      where("published", "==", true),
-      orderBy("createdAt", "desc")
-    );
-
-    getDocs(q)
-      .then((snap) => setContent(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
-      .catch((err) => console.error("Failed to load vault content:", err))
-      .finally(() => setLoadingContent(false));
-  }, [hasAccess]);
-
-  // Track auth state and look up subscription tier
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
-      if (!firebaseUser) {
-        setHasAccess(false);
-        setCheckingAccess(false);
-        return;
-      }
-
+    async function loadNews() {
       try {
-        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        const tier = userDoc.exists() ? userDoc.data()?.subscription?.tier : "free";
-        setHasAccess(tier === "founder");
+        const res = await fetch('/api/news');
+        const data = await res.json();
+        setNews(data.news?.data || []);
       } catch (err) {
-        console.error("Failed to check subscription:", err);
-        setHasAccess(false);
-      } finally {
-        setCheckingAccess(false);
+        console.error("Failed to load news", err);
       }
-    });
-
-    return () => unsubscribe();
+    }
+    loadNews();
   }, []);
-
-  // If we just came back from Paystack with a reference, verify it
-  useEffect(() => {
-    const { ref } = router.query;
-    if (!ref || !user) return;
-
-    setVerifying(true);
-    setError("");
-
-    fetch("/api/verify-payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference: ref }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setHasAccess(true);
-        } else {
-          setError(data.message || "We couldn't confirm this payment yet.");
-        }
-      })
-      .catch(() => setError("Payment verification failed. If you were charged, contact support."))
-      .finally(() => {
-        setVerifying(false);
-        // Clean the ref param out of the URL so refreshing doesn't re-verify
-        router.replace("/vault", undefined, { shallow: true });
-      });
-  }, [router.query, user]);
-
-  async function handleSubscribe() {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    setSubscribing(true);
-    setError("");
-
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.message || "Could not start checkout");
-      }
-
-      window.location.href = data.authorization_url;
-    } catch (err) {
-      setError(err.message);
-      setSubscribing(false);
-    }
-  }
 
   return (
     <Layout>
-      <section style={styles.page}>
-        <div style={styles.container}>
-          <span style={styles.tag}>Founder Vault</span>
-          <h1 style={styles.title}>Private research and strategic access</h1>
-          <p style={styles.subtitle}>
-            The Founder Vault gives members access to premium SlipMint content,
-            deeper research, and curated strategic insights.
-          </p>
 
-          {checkingAccess || verifying ? (
-            <div style={styles.lockedCard}>
-              <p style={styles.lockedText}>
-                {verifying ? "Confirming your payment..." : "Checking your access..."}
-              </p>
-            </div>
-          ) : !hasAccess ? (
-            <div style={styles.lockedCard}>
-              <h2 style={styles.lockedTitle}>Members only</h2>
-              <p style={styles.lockedText}>
-                This section is currently locked. Subscribe to unlock premium
-                research and private founder content for ₦55,000/month.
-              </p>
+      {/* HERO */}
+      <div className={styles.heroWrapper}>
+        <div className={styles.heroGlow}></div>
+        <Hero />
+      </div>
 
-              {error && <p style={styles.errorText}>{error}</p>}
+      {/* ACTION BUTTONS */}
+      <div className={styles.actions}>
+        <Link href="/signup" className={styles.primaryButton}>
+          Get Started
+        </Link>
 
-              <div style={styles.actions}>
-                {user ? (
-                  <button
-                    onClick={handleSubscribe}
-                    disabled={subscribing}
-                    style={{ ...styles.primaryButton, opacity: subscribing ? 0.6 : 1, border: "none", cursor: "pointer" }}
-                  >
-                    {subscribing ? "Redirecting..." : "Subscribe — ₦55,000/mo"}
-                  </button>
-                ) : (
-                  <Link href="/login" style={styles.primaryButton}>
-                    Login to Subscribe
-                  </Link>
-                )}
-                <Link href="/research" style={styles.secondaryButton}>
-                  View Free Research
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div>
-              {loadingContent && <p style={styles.lockedText}>Loading vault content...</p>}
+        <Link href="/vault" className={styles.secondaryButton}>
+          Explore Founder Vault
+        </Link>
 
-              {!loadingContent && content.length === 0 && (
-                <div style={styles.lockedCard}>
-                  <p style={styles.lockedText}>
-                    New research and notes are added regularly — check back soon.
-                  </p>
-                </div>
-              )}
+        <Link href="/research" className={styles.secondaryButton}>
+          Read Research
+        </Link>
 
-              {CATEGORIES.map((cat) => {
-                const items = content.filter((c) => c.category === cat.value);
-                if (items.length === 0) return null;
-                return (
-                  <div key={cat.value} style={{ marginBottom: "40px" }}>
-                    <h2 style={styles.sectionTitle}>{cat.label}</h2>
-                    <div style={styles.grid}>
-                      {items.map((item) => (
-                        <article key={item.id} style={styles.card}>
-                          <h3 style={styles.cardTitle}>{item.title}</h3>
-                          <p style={styles.cardText}>{item.body}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+        <a 
+          href="https://t.me/slipmintsignals" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={styles.telegramButton}
+        >
+          Join Telegram
+        </a>
+      </div>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* STATS */}
+      <section className={`${styles.statsSection} ${styles.fadeIn}`}>
+        <div className={styles.statsGrid}>
+          <div className={styles.statBox}>
+            <h3>12,400+</h3>
+            <p>Weekly Readers</p>
+          </div>
+
+          <div className={styles.statBox}>
+            <h3>3+ Years</h3>
+            <p>Market Research</p>
+          </div>
+
+          <div className={styles.statBox}>
+            <h3>98%</h3>
+            <p>User Satisfaction</p>
+          </div>
         </div>
       </section>
-    </Layout>
-  );
-}
 
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#081120",
-    color: "#fff",
-    padding: "40px 20px 60px",
-  },
-  container: {
-    maxWidth: "1100px",
-    margin: "0 auto",
-  },
-  tag: {
-    display: "inline-block",
-    color: "#22c55e",
-    fontWeight: 700,
-    marginBottom: "12px",
-  },
-  title: {
-    fontSize: "40px",
-    margin: "0 0 14px",
-  },
-  subtitle: {
-    color: "#b8c7d9",
-    fontSize: "18px",
-    lineHeight: 1.7,
-    maxWidth: "760px",
-    marginBottom: "30px",
-  },
-  lockedCard: {
-    background: "#0f1b2d",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "20px",
-    padding: "28px",
-  },
-  lockedTitle: {
-    margin: "0 0 12px",
-    fontSize: "28px",
-  },
-  lockedText: {
-    margin: "0 0 22px",
-    color: "#b8c7d9",
-    lineHeight: 1.7,
-    maxWidth: "720px",
-  },
-  errorText: {
-    color: "#f87171",
-    marginBottom: "16px",
-    fontSize: "14px",
-  },
-  actions: {
-    display: "flex",
-    gap: "14px",
-    flexWrap: "wrap",
-  },
-  primaryButton: {
-    display: "inline-block",
-    textDecoration: "none",
-    padding: "14px 22px",
-    borderRadius: "12px",
-    fontWeight: 700,
-    fontSize: "15px",
-    background: "#22c55e",
-    color: "#081120",
-  },
-  secondaryButton: {
-    display: "inline-block",
-    textDecoration: "none",
-    padding: "14px 22px",
-    borderRadius: "12px",
-    fontWeight: 700,
-    border: "1px solid rgba(255,255,255,0.16)",
-    color: "#ffffff",
-    background: "rgba(255,255,255,0.05)",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: "20px",
-  },
-  card: {
-    background: "#0f1b2d",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "18px",
-    padding: "22px",
-  },
-  cardTitle: {
-    margin: "0 0 10px",
-    fontSize: "22px",
-  },
-  cardText: {
-    margin: 0,
-    color: "#b8c7d9",
-    lineHeight: 1.6,
-    whiteSpace: "pre-wrap",
-  },
-  sectionTitle: {
-    fontSize: "20px",
-    fontWeight: 700,
-    margin: "0 0 18px",
-    color: "#ffffff",
-  },
-};
+      <div className={styles.sectionDivider}></div>
+
+      {/* FEATURES */}
+      <section className={`${styles.featuresSection} ${styles.fadeIn}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Why SlipMint</span>
+          <h2>Built for structure, clarity, and trust</h2>
+          <p>
+            SlipMint is designed as a modern crypto infrastructure platform
+            focused on research, transparency, and disciplined growth.
+          </p>
+        </div>
+
+        <div className={styles.featureGrid}>
+          <div className={styles.featureCard}>
+            <div className={styles.featureIcon}>01</div>
+            <h3>Research</h3>
+            <p>Structured crypto insights, market commentary, and weekly analysis.</p>
+          </div>
+
+          <div className={styles.featureCard}>
+            <div className={styles.featureIcon}>02</div>
+            <h3>Founder Vault</h3>
+            <p>Premium content, private notes, and deeper strategic ideas.</p>
+          </div>
+
+          <div className={styles.featureCard}>
+            <div className={styles.featureIcon}>03</div>
+            <h3>Transparency</h3>
+            <p>A cleaner and more trustworthy digital experience.</p>
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* TESTIMONIALS */}
+      <section className={`${styles.testimonials} ${styles.fadeIn}`}>
+        <h2>What Traders Say</h2>
+
+        <div className={styles.testimonialGrid}>
+          <div className={styles.testimonialCard}>
+            <p>"SlipMint changed how I analyze the market."</p>
+            <span>- Daniel O.</span>
+          </div>
+
+          <div className={styles.testimonialCard}>
+            <p>"The Founder Vault is worth every second."</p>
+            <span>- Chioma A.</span>
+          </div>
+
+          <div className={styles.testimonialCard}>
+            <p>"The research is clean, structured, and actionable."</p>
+            <span>- Kelvin M.</span>
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* PRICING */}
+      <section className={`${styles.pricingSection} ${styles.fadeIn}`}>
+        <h2>Membership Levels</h2>
+
+        <div className={styles.pricingGrid}>
+          <div className={styles.pricingCard}>
+            <h3>Free</h3>
+            <p>Basic research + weekly insights</p>
+          </div>
+
+          <div className={styles.pricingCard}>
+            <h3>Founder Vault</h3>
+            <p>Premium notes, private research, and strategy</p>
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* LATEST CRYPTO NEWS */}
+      <section className={styles.newsSection}>
+        <h2 className={styles.newsTitle}>Latest Crypto News</h2>
+
+        <div className={styles.newsGrid}>
+          {news.slice(0, 6).map((item, i) => (
+            <a 
+              key={i} 
+              href={item.news_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={styles.newsCard}
+            >
+              <h3>{item.title}</h3>
+              <p>{item.source_name}</p>
+              <span>{new Date(item.date).toLocaleString()}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* TRADING PARTNERS & RESOURCES */}
+      <section className={`${styles.partnersSection} ${styles.fadeIn}`}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTag}>Ecosystem</span>
+          <h2>Recommended Trading Platforms</h2>
+          <p>Verified partners we use and recommend for execution</p>
+        </div>
+
+        <div className={styles.partnerGrid}>
+          <a 
+            href="https://www.gate.io/share/VQQRBWXZBW" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.partnerCard}
+          >
+            <h3>Gate.io</h3>
+            <p>Spot & futures trading with deep liquidity</p>
+            <span className={styles.partnerCTA}>Open Account →</span>
+          </a>
+
+          <a 
+            href="https://one.exnessonelink.com/a/c_5ufq543auz?platform=mobile" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.partnerCard}
+          >
+            <h3>Exness (Mobile)</h3>
+            <p>Forex & crypto on-the-go trading</p>
+            <span className={styles.partnerCTA}>Download App →</span>
+          </a>
+
+          <a 
+            href="https://one.exnessonelink.com/boarding/sign-up/a/c_5ufq543auz" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.partnerCard}
+          >
+            <h3>Exness (Web)</h3>
+            <p>Desktop platform for advanced traders</p>
+            <span className={styles.partnerCTA}>Trade on Web →</span>
+          </a>
+        </div>
+      </section>
+
+      <div className={styles.sectionDivider}></div>
+
+      {/* NEWSLETTER */}
+      <NewsletterForm />
+
+      {/* FLOATING CTA */}
+      <a href="/signup" className={styles.floatingCTA}>
+        Get Started
+      </a>
+
+    </Layout>
+  )
+}
