@@ -12,16 +12,22 @@ const CATEGORIES = [
   { value: "watchlist", label: "Strategic Watchlist" },
 ];
 
+// If Firebase's auth listener never fires (e.g. the network-request-failed
+// issue), don't leave the user staring at "Checking your access..." forever.
+const AUTH_CHECK_TIMEOUT_MS = 10000;
+
 export default function Vault() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [hasAccess, setHasAccess] = useState(false);
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
   const [content, setContent] = useState([]);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState("");
 
   // Once access is confirmed, load the real vault content (gated server-side
   // by Firestore security rules, not just this client-side check — see
@@ -30,6 +36,8 @@ export default function Vault() {
     if (!hasAccess) return;
 
     setLoadingContent(true);
+    setContentError("");
+
     const q = query(
       collection(db, "vaultContent"),
       where("published", "==", true),
@@ -38,13 +46,35 @@ export default function Vault() {
 
     getDocs(q)
       .then((snap) => setContent(snap.docs.map((d) => ({ id: d.id, ...d.data() }))))
-      .catch((err) => console.error("Failed to load vault content:", err))
+      .catch((err) => {
+        console.error("Failed to load vault content:", err);
+        // Surface it instead of silently showing "check back soon" — this is
+        // usually a missing Firestore composite index (published + createdAt)
+        // rather than an actual empty vault.
+        setContentError(
+          "We couldn't load vault content right now. Please refresh, or contact support if this keeps happening."
+        );
+      })
       .finally(() => setLoadingContent(false));
   }, [hasAccess]);
 
-  // Track auth state and look up subscription tier
+  // Track auth state and look up subscription tier, with a timeout so a
+  // silent network failure doesn't leave the page stuck on "Checking your
+  // access..." indefinitely.
   useEffect(() => {
+    let settled = false;
+
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        setAuthTimedOut(true);
+        setCheckingAccess(false);
+      }
+    }, AUTH_CHECK_TIMEOUT_MS);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      settled = true;
+      clearTimeout(timeoutId);
+      setAuthTimedOut(false);
       setUser(firebaseUser);
 
       if (!firebaseUser) {
@@ -65,7 +95,11 @@ export default function Vault() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      settled = true;
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, []);
 
   // If we just came back from Paystack with a reference, verify it
@@ -107,7 +141,10 @@ export default function Vault() {
     setError("");
 
     try {
-      const token = await user.getIdToken();
+      // Force-refresh: an about-to-expire cached token can get rejected by
+      // /api/subscribe's verifyIdToken, causing a confusing failure right at
+      // checkout.
+      const token = await user.getIdToken(true);
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: {
@@ -128,6 +165,14 @@ export default function Vault() {
     }
   }
 
+  function handleRetryAuthCheck() {
+    setAuthTimedOut(false);
+    setCheckingAccess(true);
+    // Re-running the effect requires a fresh mount of the check; simplest
+    // reliable way from a plain function is a full reload.
+    window.location.reload();
+  }
+
   return (
     <Layout>
       <section style={styles.page}>
@@ -139,7 +184,23 @@ export default function Vault() {
             deeper research, and curated strategic insights.
           </p>
 
-          {checkingAccess || verifying ? (
+          {authTimedOut ? (
+            <div style={styles.lockedCard}>
+              <h2 style={styles.lockedTitle}>Connection problem</h2>
+              <p style={styles.lockedText}>
+                We couldn't reach the authentication service. This is usually
+                temporary — check your connection and try again.
+              </p>
+              <div style={styles.actions}>
+                <button
+                  onClick={handleRetryAuthCheck}
+                  style={{ ...styles.primaryButton, border: "none", cursor: "pointer" }}
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : checkingAccess || verifying ? (
             <div style={styles.lockedCard}>
               <p style={styles.lockedText}>
                 {verifying ? "Confirming your payment..." : "Checking your access..."}
@@ -178,7 +239,13 @@ export default function Vault() {
             <div>
               {loadingContent && <p style={styles.lockedText}>Loading vault content...</p>}
 
-              {!loadingContent && content.length === 0 && (
+              {contentError && (
+                <div style={styles.lockedCard}>
+                  <p style={styles.errorText}>{contentError}</p>
+                </div>
+              )}
+
+              {!loadingContent && !contentError && content.length === 0 && (
                 <div style={styles.lockedCard}>
                   <p style={styles.lockedText}>
                     New research and notes are added regularly — check back soon.
