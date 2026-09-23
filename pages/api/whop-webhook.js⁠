@@ -1,0 +1,86 @@
+import { buffer } from 'micro';
+import crypto from 'crypto';
+// Import your firebase admin configuration or database instance
+// import { adminDb } from '@/src/lib/firebaseAdmin';
+
+export const config = {
+  api: {
+    bodyParser: false, // Required to read raw body for webhook signature verification
+  },
+};
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405.json({ error: 'Method Not Allowed' }));
+  }
+
+  try {
+    const buf = await buffer(req);
+    const sigHeader = req.headers['whop-signature'] || req.headers['x-whop-signature'];
+    const webhookSecret = process.env.WHOP_WEBHOOK_SECRET;
+
+    // Optional: Validate signature if a secret is provided
+    if (webhookSecret && sigHeader) {
+      const computedSig = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(buf)
+        .digest('hex');
+
+      if (computedSig !== sigHeader) {
+        return res.status(400).json({ error: 'Invalid webhook signature' });
+      }
+    }
+
+    const event = JSON.parse(buf.toString('utf8'));
+    const { action, data } = event;
+
+    // Handle different Whop subscription/membership events
+    switch (action) {
+      case 'membership.went_valid':
+      case 'payment.succeeded': {
+        const customerEmail = data?.user?.email || data?.email;
+        const discordId = data?.discord_id;
+        const telegramId = data?.telegram_id;
+
+        if (customerEmail) {
+          // TODO: Update user access status in Firebase database
+          // Example: 
+          // await adminDb.collection('users').doc(customerEmail).set({
+          //   isSubscribed: true,
+          //   whopMembershipId: data?.id,
+          //   updatedAt: new Date(),
+          // }, { merge: true });
+          
+          console.log(`Granted access for active subscriber: ${customerEmail}`);
+        }
+        break;
+      }
+
+      case 'membership.went_invalid':
+      case 'payment.failed': {
+        const customerEmail = data?.user?.email || data?.email;
+
+        if (customerEmail) {
+          // TODO: Revoke or suspend access in Firebase database
+          // Example:
+          // await adminDb.collection('users').doc(customerEmail).set({
+          //   isSubscribed: false,
+          //   updatedAt: new Date(),
+          // }, { merge: true });
+
+          console.log(`Revoked access for inactive subscriber: ${customerEmail}`);
+        }
+        break;
+      }
+
+      default:
+        console.log(`Unhandled Whop event action: ${action}`);
+    }
+
+    return res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('Whop webhook error:', err.message);
+    return res.status(500).json({ error: 'Webhook handler failed' });
+  }
+}
